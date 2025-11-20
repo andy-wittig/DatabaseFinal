@@ -1,6 +1,7 @@
 import tkinter as tk
 import tkinter.scrolledtext as scrolledtext
 from tkinter import font
+from tkinter import ttk
 
 #User-Defined Routines lets one write wrapped-up SQL statements that can be started from application but run inside of Database. 
 
@@ -51,33 +52,46 @@ class UIManager():
         self.organizationOptionsFrame.grid  (row = 0, column = 2, sticky = "nsew", padx = 5, pady = 5)
         #--------------------------------------
 
-        #--- Setup Export Frame ---
+        #--- Setup Frame Widgets ---
+        self.SetupExportWidgets()
+        self.SetupHomeListingsWidgets()
+        self.SetupOrganizationOptionsWidgets()
+        #--------------------------
+        
+    def SetupExportWidgets(self):
         self.exportPreview = scrolledtext.ScrolledText(self.exportFrame, bg=self.panelColor,
                                                         state="disabled", wrap = tk.WORD,
                                                         padx = 10, pady = 10)
+        #self.exportPreview.vbar.config(troughcolor = self.bgColor, bg = self.elementColor)
+
         self.exportButton = tk.Button(self.exportFrame, text = "Export", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont)
 
-        exportTitleLabel = tk.Label(self.exportFrame, text="Export Home Listings", 
+        self.exportTitleLabel = tk.Label(self.exportFrame, text="Export Home Listings", 
                                     bg = self.bgColor, fg = self.textColor, font = self.titleFont)
 
-        exportTitleLabel.pack()
+        self.exportTitleLabel.pack()
         self.exportPreview.pack(fill = "both", expand = True)
         self.exportButton.pack(fill = "x")
-        #--------------------------
 
-        #--- Setup Home Listings Frame ---
-        homeListingsTitleLabel = tk.Label(self.homeListingsFrame, text="Home Listings",
+    def SetupHomeListingsWidgets(self):
+        self.homeListingsTitleLabel = tk.Label(self.homeListingsFrame, text="Home Listings",
                                            bg = self.bgColor, fg = self.textColor, font = self.titleFont)
-        homeListingsTitleLabel.pack()
-        #---------------------------------
-
-        #--- Setup Organization Options Frame ---
-        organizationOptionsTitleLabel = tk.Label(self.organizationOptionsFrame, text="Organize Listings",
-                                                  bg = self.bgColor, fg = self.textColor, font = self.titleFont)
-        organizationOptionsTitleLabel.pack()
-        #---------------------------------
         
+        self.listingsCanvas = tk.Canvas(self.homeListingsFrame, bg = self.panelColor)
+        self.listingsScrollBar = ttk.Scrollbar(self.listingsCanvas, orient = "vertical", command = self.listingsCanvas.yview)
+        self.generateListingsButton = tk.Button(self.homeListingsFrame, text = "Generate Listings", 
+                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont)
+        
+        self.homeListingsTitleLabel.pack()
+        self.listingsCanvas.pack(fill = "both", expand = True)
+        self.listingsScrollBar.pack(side = "right", fill = "y")
+        self.generateListingsButton.pack(fill = "x")
+
+    def SetupOrganizationOptionsWidgets(self):
+        self.organizationOptionsTitleLabel = tk.Label(self.organizationOptionsFrame, text="Organize Listings",
+                                                  bg = self.bgColor, fg = self.textColor, font = self.titleFont)
+        self.organizationOptionsTitleLabel.pack()
 
     def AddExportPreviewText(self, text): #Enables and re-enables text-scrollable widget to not allow user input.
         self.exportPreview.delete("1.0", tk.END) #Erases all text content from starting index to end.
