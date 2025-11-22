@@ -1,5 +1,6 @@
 import psycopg2
 from psycopg2.extras import execute_values
+from psycopg2.extras import RealDictCursor
 import atexit
 import pyRealtor
 
@@ -24,7 +25,7 @@ class DBManager():
                                         password = self.dbPass,
                                         host = self.dbHost,
                                         port = self.dbPort)
-            self.cur = self.conn.cursor()
+            self.cur = self.conn.cursor(cursor_factory = RealDictCursor)
 
             print("Database connected successfully")
         except Exception as e:

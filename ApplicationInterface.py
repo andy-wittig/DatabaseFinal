@@ -93,15 +93,18 @@ class UIManager():
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = self.GenerateListings)
         
         #Scrollable Frame
-        self.scrollableFrame = tk.Frame(self.listingsCanvas, bg = self.elementColor)
-        self.listingsCanvas.create_window((0, 0), window = self.scrollableFrame, anchor= "nw")
+        self.scrollableFrame = tk.Frame(self.listingsCanvas, bg = self.panelColor)
+        self.scrollableFrameID = self.listingsCanvas.create_window((0, 0), window = self.scrollableFrame, anchor = "nw")
+
+        self.listingsCanvas.bind(
+            "<Configure>",
+            lambda e: self.listingsCanvas.itemconfig(self.scrollableFrameID, width = e.width)
+        )
 
         self.listingsCanvas.configure(yscrollcommand = self.listingsScrollBar.set)
         self.scrollableFrame.bind( #This will update the scrolling region size when frame gets updated
-        "<Configure>",
-            lambda e: self.listingsCanvas.configure(
-                scrollregion = self.listingsCanvas.bbox("all")
-            )
+            "<Configure>",
+            lambda e: self.listingsCanvas.configure(scrollregion = self.listingsCanvas.bbox("all"))
         )
         
         self.homeListingsTitleLabel.pack()
@@ -141,16 +144,16 @@ class UIManager():
         
         self.ClearFrame(self.scrollableFrame)
         for row in listingsData:
-            _bathrooms = row[1]
-            _bedrooms = row[2]
-            _size = row[3]
-            _houseCategory = row[4]
-            _price = row[5]
-            _streetName = row[6]
-            _city = row[7]
-            _state = row[8]
-            _latitude = row[9]
-            longitude = row[10]
+            _bathrooms = row['Bathrooms']
+            _bedrooms = row['Bedrooms']
+            _size = row['Size']
+            _houseCategory = row['House Category']
+            _price = row['Price']
+            _streetName = row['street name']
+            _city = row['city']
+            _state = row['state']
+            _latitude = row['Latitude']
+            _longitude = row['Longitude']
 
             listingInfo = (
                 f"Bathrooms: {_bathrooms}\n"
@@ -163,10 +166,10 @@ class UIManager():
                 f"State: {_state}"
             )
 
-            listingContainer = tk.Frame(self.scrollableFrame, bg = self.panelColor, padx = 10, pady = 10)
-            listingLabel = tk.Label(listingContainer, text = listingInfo,
-                                    bg = self.bgColor, fg = self.textColor, font = self.textFont, padx = 5, pady = 5)
+            listingLabelContainer = tk.Frame(self.scrollableFrame, bg = self.bgColor)
+            listingLabel = tk.Label(listingLabelContainer, text = listingInfo,
+                                    bg = self.bgColor, fg = self.textColor, 
+                                    font = self.textFont, justify = "left", anchor = "w")
             
-            listingContainer.pack(fill = "x")
-            listingLabel.pack()
-
+            listingLabelContainer.pack(fill = "x", padx = 5, pady = 5)
+            listingLabel.pack(fill = "x", padx = 5, pady = 5)
