@@ -1,5 +1,6 @@
 import psycopg2
 import atexit
+import pyRealtor
 
 class DBManager():
     def __init__(self):
@@ -37,8 +38,12 @@ class DBManager():
         self.cur.execute(sqlCommand)
         return self.cur.fetchall()
     
-    def PullHomeListingData(self):
-        pass
+    def PullHomeListingData(self, _city, _country):
+        houseObj = pyRealtor.HousesFacade()
+        houseObj.search_save_houses(
+            search_area = _city,
+            country = _country
+        )
 
     def CloseDataBase(self):
         self.cur.close()

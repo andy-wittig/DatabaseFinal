@@ -17,6 +17,8 @@ class UIManager():
 
         self.titleFont = font.Font(family="Helvetica", size=18, weight = "bold")
         self.buttonFont = font.Font(family="Helvetica", size=16)
+        self.textFont = font.Font(family="Helvetica", size=12)
+
 
         self.bgColor      = "#3D3D3D"
         self.panelColor   = "#666666"
@@ -78,11 +80,15 @@ class UIManager():
     def SetupHomeListingsWidgets(self):
         self.homeListingsTitleLabel = tk.Label(self.homeListingsFrame, text="Home Listings",
                                            bg = self.bgColor, fg = self.textColor, font = self.titleFont)
-        
+        #Scrolling Container
         self.listingsContainer = tk.Frame(self.homeListingsFrame)
         self.listingsCanvas = tk.Canvas(self.listingsContainer, bg = self.panelColor)
         self.listingsScrollBar = ttk.Scrollbar(self.listingsContainer, orient = "vertical", command = self.listingsCanvas.yview)
         
+        #Generate Listings
+        self.TextBoxContainer = tk.Frame(self.homeListingsFrame)
+        self.cityTextBox = tk.Entry(self.TextBoxContainer, bg = self.elementColor, font = self.textFont)
+        self.countryTextBox = tk.Entry(self.TextBoxContainer, bg = self.elementColor, font = self.textFont)
         self.generateListingsButton = tk.Button(self.homeListingsFrame, text = "Generate Listings", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = self.GenerateListings)
         
@@ -104,6 +110,9 @@ class UIManager():
         self.listingsCanvas.pack(side = "left", fill = "both", expand = True)
         self.listingsScrollBar.pack(side = "right", fill = "y")
 
+        self.TextBoxContainer.pack(fill = "x")
+        self.cityTextBox.pack(side = "left", expand = True, fill = "x", padx = 5)
+        self.countryTextBox.pack(side = "left", expand = True, fill = "x", padx = 5)
         self.generateListingsButton.pack(fill = "x")
 
     def SetupOrganizationOptionsWidgets(self):
@@ -122,7 +131,10 @@ class UIManager():
             widget.destroy()
 
     def GenerateListings(self):
-        self.databaseManager.PullHomeListingData()
+        cityInput = self.cityTextBox.get()
+        countryInput = self.countryTextBox.get()
+
+        self.databaseManager.PullHomeListingData(cityInput, countryInput)
         listingsData = self.databaseManager.ExecuteScript("SQL_Scripts/GetListings.sql")
         
         self.ClearFrame(self.scrollableFrame)
