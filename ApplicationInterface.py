@@ -134,11 +134,39 @@ class UIManager():
         cityInput = self.cityTextBox.get()
         countryInput = self.countryTextBox.get()
 
+        #ISSUE: These need to be in try catch statements for saftey
         self.databaseManager.PullHomeListingData(cityInput, countryInput)
-        listingsData = self.databaseManager.ExecuteScript("SQL_Scripts/GetListings.sql")
+        listingsData = self.databaseManager.GetHomeListingData()
+        #---
         
         self.ClearFrame(self.scrollableFrame)
         for row in listingsData:
-            #homeName = row[0]
-            #CreateHomeListing(homeName, homePrice)
-            pass
+            _bathrooms = row[1]
+            _bedrooms = row[2]
+            _size = row[3]
+            _houseCategory = row[4]
+            _price = row[5]
+            _streetName = row[6]
+            _city = row[7]
+            _state = row[8]
+            _latitude = row[9]
+            longitude = row[10]
+
+            listingInfo = (
+                f"Bathrooms: {_bathrooms}\n"
+                f"Bedrooms: {_bedrooms}\n"
+                f"Size: {_size}\n"
+                f"House Category: {_houseCategory}\n"
+                f"Price: {_price}\n"
+                f"Street: {_streetName}\n"
+                f"City: {_city}\n"
+                f"State: {_state}"
+            )
+
+            listingContainer = tk.Frame(self.scrollableFrame, bg = self.panelColor, padx = 10, pady = 10)
+            listingLabel = tk.Label(listingContainer, text = listingInfo,
+                                    bg = self.bgColor, fg = self.textColor, font = self.textFont, padx = 5, pady = 5)
+            
+            listingContainer.pack(fill = "x")
+            listingLabel.pack()
+

@@ -11,6 +11,8 @@ class DBManager():
         self.dbHost = "127.0.0.1"
         self.dbPort = "5442"
 
+        self.listingsTableName = "Listings"
+
         self.ConnectToDatabase()
         
         atexit.register(self.ExitHandler)
@@ -27,10 +29,6 @@ class DBManager():
             print("Database connected successfully")
         except:
             print("Database not connected successfully")
-
-    def ExecuteQuery(self, queryMessage):
-        self.cur.execute(queryMessage)
-        self.conn.commit()
     
     def ExecuteScript(self, scriptPath):
         with open(scriptPath, "r") as file:
@@ -38,6 +36,12 @@ class DBManager():
         
         self.cur.execute(sqlCommand)
         self.conn.commit()
+
+    def GetHomeListingData(self):
+        sqlQuery = f"SELECT * FROM {self.listingsTableName};"
+        self.cur.execute(sqlQuery)
+        rows = self.cur.fetchall()
+        return rows
     
     def PullHomeListingData(self, _city, _country):
         houseObj = pyRealtor.HousesFacade()
@@ -45,14 +49,13 @@ class DBManager():
             search_area = _city,
             country = _country
         )
-        print(houseData.columns)
-        
+
         houseData = houseObj.houses_df #processed data
+        print(houseData.columns)
         cols = list(houseData.columns)
         values = [tuple(x) for x in houseData.to_numpy()]
-        tableName = "Listings"
 
-        sqlCommand = f"INSERT INTO {tableName} ({', '.join(cols)}) VALUES %s"
+        sqlCommand = f"INSERT INTO {self.listingsTableName} ({', '.join(cols)}) VALUES %s"
         execute_values(self.cur, sqlCommand, values)
         self.conn.commit()
 
