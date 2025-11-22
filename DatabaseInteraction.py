@@ -5,11 +5,11 @@ import pyRealtor
 
 class DBManager():
     def __init__(self):
-        self.dbName = "DatabaseName"
-        self.dbUser = "user"
+        self.dbName = "HomeBuyer"
+        self.dbUser = "postgres"
         self.dbPass = "password"
         self.dbHost = "127.0.0.1"
-        self.dbPort = "5442"
+        self.dbPort = "5432"
 
         self.listingsTableName = "Listings"
 
@@ -27,8 +27,9 @@ class DBManager():
             self.cur = self.conn.cursor()
 
             print("Database connected successfully")
-        except:
-            print("Database not connected successfully")
+        except Exception as e:
+            print("Database NOT connected successfully")
+            print("Error: ", e)
     
     def ExecuteScript(self, scriptPath):
         with open(scriptPath, "r") as file:
@@ -38,10 +39,14 @@ class DBManager():
         self.conn.commit()
 
     def GetHomeListingData(self):
-        sqlQuery = f"SELECT * FROM {self.listingsTableName};"
+        sqlQuery = f'SELECT * FROM public."{self.listingsTableName}";'
         self.cur.execute(sqlQuery)
         rows = self.cur.fetchall()
         return rows
+    
+    def ClearTable(self, tableName):
+        self.cur.execute(f'DELETE FROM "{tableName}";')
+        self.conn.commit()
     
     def PullHomeListingData(self, _city, _country):
         houseObj = pyRealtor.HousesFacade()
@@ -52,10 +57,13 @@ class DBManager():
 
         houseData = houseObj.houses_df #processed data
         print(houseData.columns)
-        cols = list(houseData.columns)
+        cols = ['"ID"', '"Bathrooms"', '"Bedrooms"', '"Size"', '"House Category"', '"Price"',
+                '"street name"', '"city"', '"state"', '"Latitude"', '"Longitude"', '"InsertedDate"']
         values = [tuple(x) for x in houseData.to_numpy()]
 
-        sqlCommand = f"INSERT INTO {self.listingsTableName} ({', '.join(cols)}) VALUES %s"
+        self.ClearTable(self.listingsTableName)
+
+        sqlCommand = f'INSERT INTO "{self.listingsTableName}" ({', '.join(cols)}) VALUES %s'
         execute_values(self.cur, sqlCommand, values)
         self.conn.commit()
 
