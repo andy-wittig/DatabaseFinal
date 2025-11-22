@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2.extras import execute_values
 import atexit
 import pyRealtor
 
@@ -29,14 +30,14 @@ class DBManager():
 
     def ExecuteQuery(self, queryMessage):
         self.cur.execute(queryMessage)
-        return self.cur.fetchall()
+        self.conn.commit()
     
     def ExecuteScript(self, scriptPath):
         with open(scriptPath, "r") as file:
             sqlCommand = file.read()
         
         self.cur.execute(sqlCommand)
-        return self.cur.fetchall()
+        self.conn.commit()
     
     def PullHomeListingData(self, _city, _country):
         houseObj = pyRealtor.HousesFacade()
@@ -44,6 +45,16 @@ class DBManager():
             search_area = _city,
             country = _country
         )
+        print(houseData.columns)
+        
+        houseData = houseObj.houses_df #processed data
+        cols = list(houseData.columns)
+        values = [tuple(x) for x in houseData.to_numpy()]
+        tableName = "Listings"
+
+        sqlCommand = f"INSERT INTO {tableName} ({', '.join(cols)}) VALUES %s"
+        execute_values(self.cur, sqlCommand, values)
+        self.conn.commit()
 
     def CloseDataBase(self):
         self.cur.close()
