@@ -36,6 +36,9 @@ class DBManager():
         
         self.cur.execute(sqlCommand)
         return self.cur.fetchall()
+    
+    def PullHomeListingData(self):
+        pass
 
     def CloseDataBase(self):
         self.cur.close()

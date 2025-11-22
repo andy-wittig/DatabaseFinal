@@ -6,8 +6,9 @@ from tkinter import ttk
 #User-Defined Routines lets one write wrapped-up SQL statements that can be started from application but run inside of Database. 
 
 class UIManager():
-    def __init__(self, appName):
-        self.applicationName = appName
+    def __init__(self, databaseManager):
+        self.applicationName = "Home Buyer Helper"
+        self.databaseManager = databaseManager
 
         self.root = tk.Tk()
 
@@ -78,14 +79,31 @@ class UIManager():
         self.homeListingsTitleLabel = tk.Label(self.homeListingsFrame, text="Home Listings",
                                            bg = self.bgColor, fg = self.textColor, font = self.titleFont)
         
-        self.listingsCanvas = tk.Canvas(self.homeListingsFrame, bg = self.panelColor)
-        self.listingsScrollBar = ttk.Scrollbar(self.listingsCanvas, orient = "vertical", command = self.listingsCanvas.yview)
+        self.listingsContainer = tk.Frame(self.homeListingsFrame)
+        self.listingsCanvas = tk.Canvas(self.listingsContainer, bg = self.panelColor)
+        self.listingsScrollBar = ttk.Scrollbar(self.listingsContainer, orient = "vertical", command = self.listingsCanvas.yview)
+        
         self.generateListingsButton = tk.Button(self.homeListingsFrame, text = "Generate Listings", 
-                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont)
+                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = self.GenerateListings)
+        
+        #Scrollable Frame
+        self.scrollableFrame = tk.Frame(self.listingsCanvas, bg = self.elementColor)
+        self.listingsCanvas.create_window((0, 0), window = self.scrollableFrame, anchor= "nw")
+
+        self.listingsCanvas.configure(yscrollcommand = self.listingsScrollBar.set)
+        self.scrollableFrame.bind( #This will update the scrolling region size when frame gets updated
+        "<Configure>",
+            lambda e: self.listingsCanvas.configure(
+                scrollregion = self.listingsCanvas.bbox("all")
+            )
+        )
         
         self.homeListingsTitleLabel.pack()
-        self.listingsCanvas.pack(fill = "both", expand = True)
+
+        self.listingsContainer.pack(fill = "both", expand = True)
+        self.listingsCanvas.pack(side = "left", fill = "both", expand = True)
         self.listingsScrollBar.pack(side = "right", fill = "y")
+
         self.generateListingsButton.pack(fill = "x")
 
     def SetupOrganizationOptionsWidgets(self):
@@ -98,3 +116,17 @@ class UIManager():
         self.exportPreview.config(state = "normal")
         self.exportPreview.insert(tk.END, text)
         self.exportPreview.config(state = "disabled")
+
+    def ClearFrame(self, frame):
+        for widget in frame.winfo_children():
+            widget.destroy()
+
+    def GenerateListings(self):
+        self.databaseManager.PullHomeListingData()
+        listingsData = self.databaseManager.ExecuteScript("SQL_Scripts/GetListings.sql")
+        
+        self.ClearFrame(self.scrollableFrame)
+        for row in listingsData:
+            #homeName = row[0]
+            #CreateHomeListing(homeName, homePrice)
+            pass
