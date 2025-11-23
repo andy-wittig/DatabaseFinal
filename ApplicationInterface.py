@@ -19,7 +19,7 @@ class UIManager():
         self.titleFont = font.Font(family="Helvetica", size=18, weight = "bold")
         self.buttonFont = font.Font(family="Helvetica", size=16)
         self.textFont = font.Font(family="Helvetica", size=12)
-
+        self.pageSize = 50
 
         self.bgColor      = "#3D3D3D"
         self.panelColor   = "#666666"
@@ -94,7 +94,7 @@ class UIManager():
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = self.GenerateListings)
         
         #Scrollable Frame
-        self.scrollableFrame = tk.Frame(self.listingsCanvas, bg = "red")
+        self.scrollableFrame = tk.Frame(self.listingsCanvas, bg = self.panelColor)
         self.scrollableFrameID = self.listingsCanvas.create_window((0, 0), window = self.scrollableFrame, anchor = "nw")
         
         self.listingsCanvas.configure(yscrollcommand = self.listingsScrollBar.set)
@@ -185,7 +185,7 @@ class UIManager():
         for pageNum in range(self.pageCount):
             pageOptions.append(str(pageNum))
         self.combobox['values'] = pageOptions
-        self.combobox.set("")
+        self.combobox.set("0")
             
 
     def GenerateListings(self):
@@ -197,8 +197,10 @@ class UIManager():
         self.listingsData = self.databaseManager.GetHomeListingData()
 
         #Setup Pages
-        self.pageSize = 50
-        self.pageCount = math.floor(len(self.listingsData) / 50)
-        self.lastPageCount = len(self.listingsData) % 50
+        self.lastPageCount = len(self.listingsData) % self.pageSize
+        self.pageCount = math.floor(len(self.listingsData) / self.pageSize)
+        if (self.lastPageCount > 0): self.pageCount += 1
+
         self.UpdateComboBoxOptions()
+        self.ComboboxSelected(None)
         #---
