@@ -2,6 +2,7 @@ import tkinter as tk
 import tkinter.scrolledtext as scrolledtext
 from tkinter import font
 from tkinter import ttk
+import math
 
 #User-Defined Routines lets one write wrapped-up SQL statements that can be started from application but run inside of Database. 
 
@@ -93,21 +94,26 @@ class UIManager():
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = self.GenerateListings)
         
         #Scrollable Frame
-        self.scrollableFrame = tk.Frame(self.listingsCanvas, bg = self.panelColor)
+        self.scrollableFrame = tk.Frame(self.listingsCanvas, bg = "red")
         self.scrollableFrameID = self.listingsCanvas.create_window((0, 0), window = self.scrollableFrame, anchor = "nw")
-
-        self.listingsCanvas.bind(
-            "<Configure>",
-            lambda e: self.listingsCanvas.itemconfig(self.scrollableFrameID, width = e.width)
-        )
-
+        
         self.listingsCanvas.configure(yscrollcommand = self.listingsScrollBar.set)
         self.scrollableFrame.bind( #This will update the scrolling region size when frame gets updated
             "<Configure>",
             lambda e: self.listingsCanvas.configure(scrollregion = self.listingsCanvas.bbox("all"))
         )
+  
+        self.listingsCanvas.bind(
+            "<Configure>",
+            lambda e: self.listingsCanvas.itemconfig(self.scrollableFrameID, width = e.width)
+        )
+
+        #Combobox
+        self.combobox = ttk.Combobox(self.homeListingsFrame, values = [])
+        self.combobox.bind("<<ComboboxSelected>>", self.ComboboxSelected)
         
         self.homeListingsTitleLabel.pack()
+        self.combobox.pack()
 
         self.listingsContainer.pack(fill = "both", expand = True)
         self.listingsCanvas.pack(side = "left", fill = "both", expand = True)
@@ -133,17 +139,16 @@ class UIManager():
         for widget in frame.winfo_children():
             widget.destroy()
 
-    def GenerateListings(self):
-        cityInput = self.cityTextBox.get()
-        countryInput = self.countryTextBox.get()
+    def ComboboxSelected(self, event):
+        #ISSUE: Check if listingsData has been set yet!
 
-        #ISSUE: These need to be in try catch statements for saftey
-        self.databaseManager.PullHomeListingData(cityInput, countryInput)
-        listingsData = self.databaseManager.GetHomeListingData()
-        #---
-        
+        currentPage = int(self.combobox.get()) * self.pageSize
         self.ClearFrame(self.scrollableFrame)
-        for row in listingsData:
+
+        for count, row in enumerate(self.listingsData):
+            if (count < currentPage): continue
+            if (count >= currentPage + self.pageSize): break
+
             _bathrooms = row['Bathrooms']
             _bedrooms = row['Bedrooms']
             _size = row['Size']
@@ -156,6 +161,7 @@ class UIManager():
             _longitude = row['Longitude']
 
             listingInfo = (
+                f"Listing Number {count}\n"
                 f"Bathrooms: {_bathrooms}\n"
                 f"Bedrooms: {_bedrooms}\n"
                 f"Size: {_size}\n"
@@ -166,10 +172,33 @@ class UIManager():
                 f"State: {_state}"
             )
 
-            listingLabelContainer = tk.Frame(self.scrollableFrame, bg = self.bgColor)
-            listingLabel = tk.Label(listingLabelContainer, text = listingInfo,
+            #listingLabelContainer = tk.Frame(self.scrollableFrame, bg = self.bgColor)
+            listingLabel = tk.Label(self.scrollableFrame, text = listingInfo,
                                     bg = self.bgColor, fg = self.textColor, 
                                     font = self.textFont, justify = "left", anchor = "w")
             
-            listingLabelContainer.pack(fill = "x", padx = 5, pady = 5)
+            #listingLabelContainer.pack(fill = "x", padx = 5, pady = 5)
             listingLabel.pack(fill = "x", padx = 5, pady = 5)
+
+    def UpdateComboBoxOptions(self):
+        pageOptions = []
+        for pageNum in range(self.pageCount):
+            pageOptions.append(str(pageNum))
+        self.combobox['values'] = pageOptions
+        self.combobox.set("")
+            
+
+    def GenerateListings(self):
+        cityInput = self.cityTextBox.get()
+        countryInput = self.countryTextBox.get()
+
+        #ISSUE: These need to be in try catch statements for saftey
+        self.databaseManager.PullHomeListingData(cityInput, countryInput)
+        self.listingsData = self.databaseManager.GetHomeListingData()
+
+        #Setup Pages
+        self.pageSize = 50
+        self.pageCount = math.floor(len(self.listingsData) / 50)
+        self.lastPageCount = len(self.listingsData) % 50
+        self.UpdateComboBoxOptions()
+        #---
