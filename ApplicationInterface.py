@@ -27,6 +27,11 @@ class UIManager():
         self.textColor    = "#E0E0E0"
         #-----------------------
 
+        #--- KNN Variables ----
+        self.knnGroupCount = 1
+        self.knnGroupCountOptions = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+        #----------------------
+
         self.SetupWindow()
 
         self.root.mainloop()
@@ -93,6 +98,9 @@ class UIManager():
         self.generateListingsButton = tk.Button(self.homeListingsFrame, text = "Generate Listings", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = self.GenerateListings)
         
+        self.cityTextBox.insert(0, 'Sparks')
+        self.countryTextBox.insert(0, 'United States')
+        
         #Scrollable Frame
         self.scrollableFrame = tk.Frame(self.listingsCanvas, bg = self.panelColor)
         self.scrollableFrameID = self.listingsCanvas.create_window((0, 0), window = self.scrollableFrame, anchor = "nw")
@@ -127,7 +135,26 @@ class UIManager():
     def SetupOrganizationOptionsWidgets(self):
         self.organizationOptionsTitleLabel = tk.Label(self.organizationOptionsFrame, text="Organize Listings",
                                                   bg = self.bgColor, fg = self.textColor, font = self.titleFont)
+        
+        #Sort By options
+        self.SortPriceHighButton = tk.Button(self.organizationOptionsFrame, text = "Sort by Price: Highest", 
+                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.SortBy("PriceHigh"))
+        self.SortPriceLowButton = tk.Button(self.organizationOptionsFrame, text = "Sort by Price: Lowest", 
+                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.SortBy("PriceLow"))
+        
+        #KNN Grouping
+        self.knnFrame = tk.Frame(self.organizationOptionsFrame)
+        self.knnCombobox = ttk.Combobox(self.knnFrame, values = self.knnGroupCountOptions)
+        self.knnCombobox.bind("<<ComboboxSelected>>", self.knnComboboxSelected)
+        self.knnRunButton = tk.Button(self.knnFrame, text = "Run KNN Algorithm", 
+                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.RunKNN())
+
         self.organizationOptionsTitleLabel.pack()
+        self.SortPriceHighButton.pack(anchor = tk.CENTER)
+        self.SortPriceLowButton.pack(anchor = tk.CENTER)
+        self.knnFrame.pack(anchor = tk.CENTER)
+        self.knnCombobox.pack(side = "left")
+        self.knnRunButton.pack(side = "right")
 
     def AddExportPreviewText(self, text): #Enables and re-enables text-scrollable widget to not allow user input.
         self.exportPreview.delete("1.0", tk.END) #Erases all text content from starting index to end.
@@ -139,8 +166,14 @@ class UIManager():
         for widget in frame.winfo_children():
             widget.destroy()
 
+    def knnComboboxSelected(self, event):
+        self.knnGroupCount = int(self.knnCombobox.get())
+
+    def RunnKNN():
+        pass
+
     def ComboboxSelected(self, event):
-        #ISSUE: Check if listingsData has been set yet!
+        if (self.listingsData == None): return
 
         currentPage = int(self.combobox.get()) * self.pageSize
         self.ClearFrame(self.scrollableFrame)
@@ -186,21 +219,26 @@ class UIManager():
             pageOptions.append(str(pageNum))
         self.combobox['values'] = pageOptions
         self.combobox.set("0")
-            
 
-    def GenerateListings(self):
-        cityInput = self.cityTextBox.get()
-        countryInput = self.countryTextBox.get()
-
-        #ISSUE: These need to be in try catch statements for saftey
-        self.databaseManager.PullHomeListingData(cityInput, countryInput)
-        self.listingsData = self.databaseManager.GetHomeListingData()
-
-        #Setup Pages
+    def SetupComboboxPages(self):
         self.lastPageCount = len(self.listingsData) % self.pageSize
         self.pageCount = math.floor(len(self.listingsData) / self.pageSize)
         if (self.lastPageCount > 0): self.pageCount += 1
 
         self.UpdateComboBoxOptions()
         self.ComboboxSelected(None)
+
+    def GenerateListings(self):
+        cityInput = self.cityTextBox.get()
+        countryInput = self.countryTextBox.get()
+
+        #ISSUE: These need to be in a try catch statement for saftey
+        self.databaseManager.PullHomeListingData(cityInput, countryInput)
+        self.listingsData = self.databaseManager.GetHomeListingData()
+
+        self.SetupComboboxPages()
         #---
+
+    def SortBy(self, sortType):
+        self.listingsData = self.databaseManager.ExecuteScript(self.databaseManager.sortQueryDict[sortType])
+        self.SetupComboboxPages()

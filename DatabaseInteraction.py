@@ -13,6 +13,10 @@ class DBManager():
         self.dbPort = "5432"
 
         self.listingsTableName = "Listings"
+        self.sortQueryDict = {
+            "PriceHigh" : "SQL_Scripts\SortByPriceHigh.sql",
+            "PriceLow" : "SQL_Scripts\SortByPriceLow.sql",
+        }
 
         self.ConnectToDatabase()
         
@@ -37,7 +41,10 @@ class DBManager():
             sqlCommand = file.read()
         
         self.cur.execute(sqlCommand)
+        rows = self.cur.fetchall()
         self.conn.commit()
+        
+        return rows
 
     def GetHomeListingData(self):
         sqlQuery = f'SELECT * FROM public."{self.listingsTableName}";'
