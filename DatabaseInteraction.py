@@ -38,15 +38,14 @@ class DBManager():
             conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
             cur = conn.cursor()
 
-            cur.execute(f"SELECT 1 FROM pg_database WHERE datname = '{name}';")
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s;", (name,))
             
-            result = cur.fetchone()
+            exists = cur.fetchone()
 
-            if (not result):
+            if (not exists):
                 print(f"Database '{name}' does not exist, creating one.")
 
                 self.ExecuteScript("SQL_Scripts\CreateDatabase.sql", cur)
-                self.ExecuteScript("SQL_Scripts\CreateListingsTable.sql", cur)
             else:
                 print(f"Database '{name}' already exist, attempting to connect.")
 
@@ -68,6 +67,14 @@ class DBManager():
         except psycopg2.Error as e:
             print("Database NOT connected successfully")
             print("Error: ", e)
+
+        self.cur.execute("SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = %s;", (self.listingsTableName,))
+        exists = self.cur.fetchone()
+        if (not exists):
+            print ("Listings table nout found, creating one.")
+            self.ExecuteScript("SQL_Scripts\CreateListingsTable.sql")
+        else:
+            print ("Listings table was found.")
     
     def ExecuteScript(self, scriptPath,  cursor = None):
         if (cursor == None): cursor = self.cur
@@ -76,9 +83,11 @@ class DBManager():
             sqlCommand = file.read()
         
         cursor.execute(sqlCommand)
-        rows = cursor.fetchall()
         
-        return rows
+        try:
+            return cursor.fetchall()
+        except psycopg2.ProgrammingError:
+            return None
 
     def GetHomeListingData(self):
         sqlQuery = f'SELECT * FROM public."{self.listingsTableName}";'

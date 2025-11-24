@@ -180,7 +180,6 @@ class UIManager():
         
         kmc = KMeansClusteringManager(self.kmcGroupCount, positions)
         kmcClusters = kmc.Fit()
-        print(kmcClusters)
 
     def ComboboxSelected(self, event):
         if (self.listingsData == None): return
