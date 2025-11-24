@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from psycopg2.extras import execute_values
 from psycopg2.extras import RealDictCursor
 import atexit
@@ -18,9 +19,41 @@ class DBManager():
             "PriceLow" : "SQL_Scripts\SortByPriceLow.sql",
         }
 
+        self.CheckDatabaseExists(self.dbUser, self.dbName, self.dbPass, self.dbHost, self.dbPort)
+
         self.ConnectToDatabase()
         
         atexit.register(self.ExitHandler)
+
+    def CheckDatabaseExists(self, user, name, password, host, port):
+        conn = None
+        try:
+            conn = psycopg2.connect(
+                dbname='postgres',
+                user = user,
+                password = password,
+                host = host,
+                port = port
+            )
+            conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            cur = conn.cursor()
+
+            cur.execute(f"SELECT 1 FROM pg_database WHERE datname = '{name}';")
+            
+            result = cur.fetchone()
+
+            if (not result):
+                print(f"Database '{name}' does not exist, creating one.")
+
+                self.ExecuteScript("SQL_Scripts\CreateDatabase.sql", cur)
+                self.ExecuteScript("SQL_Scripts\CreateListingsTable.sql", cur)
+            else:
+                print(f"Database '{name}' already exist, attempting to connect.")
+
+        except psycopg2.Error as e:
+            print("Error: ", e)
+        finally:
+            if (conn): conn.close()
 
     def ConnectToDatabase(self):
         try:
@@ -32,16 +65,18 @@ class DBManager():
             self.cur = self.conn.cursor(cursor_factory = RealDictCursor)
 
             print("Database connected successfully")
-        except Exception as e:
+        except psycopg2.Error as e:
             print("Database NOT connected successfully")
             print("Error: ", e)
     
-    def ExecuteScript(self, scriptPath):
+    def ExecuteScript(self, scriptPath,  cursor = None):
+        if (cursor == None): cursor = self.cur
+        
         with open(scriptPath, "r") as file:
             sqlCommand = file.read()
         
-        self.cur.execute(sqlCommand)
-        rows = self.cur.fetchall()
+        cursor.execute(sqlCommand)
+        rows = cursor.fetchall()
         
         return rows
 
