@@ -3,7 +3,7 @@ import tkinter.scrolledtext as scrolledtext
 from tkinter import font
 from tkinter import ttk
 import math
-from KNN import KNNAlgorithm
+from KMeansClustering import KMeansClusteringManager
 
 #User-Defined Routines lets one write wrapped-up SQL statements that can be started from application but run inside of Database. 
 
@@ -28,9 +28,9 @@ class UIManager():
         self.textColor    = "#E0E0E0"
         #-----------------------
 
-        #--- KNN Variables ----
-        self.knnGroupCount = 1
-        self.knnGroupCountOptions = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+        #--- kmc Variables ----
+        self.kmcGroupCount = 1
+        self.kmcGroupCountOptions = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
         #----------------------
 
         self.SetupWindow()
@@ -143,19 +143,19 @@ class UIManager():
         self.SortPriceLowButton = tk.Button(self.organizationOptionsFrame, text = "Sort by Price: Lowest", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.SortBy("PriceLow"))
         
-        #KNN Grouping
-        self.knnFrame = tk.Frame(self.organizationOptionsFrame)
-        self.knnCombobox = ttk.Combobox(self.knnFrame, values = self.knnGroupCountOptions)
-        self.knnCombobox.bind("<<ComboboxSelected>>", self.knnComboboxSelected)
-        self.knnRunButton = tk.Button(self.knnFrame, text = "Run KNN Algorithm", 
-                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.RunKNN())
+        #kmc Grouping
+        self.kmcFrame = tk.Frame(self.organizationOptionsFrame)
+        self.kmcCombobox = ttk.Combobox(self.kmcFrame, values = self.kmcGroupCountOptions)
+        self.kmcCombobox.bind("<<ComboboxSelected>>", self.KMCComboboxSelected)
+        self.kmcRunButton = tk.Button(self.kmcFrame, text = "Run kmc Algorithm", 
+                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.RunKMC())
 
         self.organizationOptionsTitleLabel.pack()
         self.SortPriceHighButton.pack(anchor = tk.CENTER, pady = 5)
         self.SortPriceLowButton.pack(anchor = tk.CENTER, pady = 5)
-        self.knnFrame.pack(anchor = tk.CENTER, pady = 5)
-        self.knnCombobox.pack(side = "left")
-        self.knnRunButton.pack(side = "right")
+        self.kmcFrame.pack(anchor = tk.CENTER, pady = 5)
+        self.kmcCombobox.pack(side = "left")
+        self.kmcRunButton.pack(side = "right")
 
     def AddExportPreviewText(self, text): #Enables and re-enables text-scrollable widget to not allow user input.
         self.exportPreview.delete("1.0", tk.END) #Erases all text content from starting index to end.
@@ -167,15 +167,20 @@ class UIManager():
         for widget in frame.winfo_children():
             widget.destroy()
 
-    def knnComboboxSelected(self, event):
-        self.knnGroupCount = int(self.knnCombobox.get())
+    def KMCComboboxSelected(self, event):
+        self.kmcGroupCount = int(self.kmcCombobox.get())
 
-    def RunnKNN(self):
+    def RunKMC(self):
         positionData = self.databaseManager.GetHomePositions()
+        if (len(positionData) < 1): return
+
         positions = []
-        for i, row in enumerate(positionData):
-            positions[i] = [row['Longitude'], row['Latitude']]
-        knn = KNNAlgorithm(self.knnGroupCount, positions)
+        for row in positionData:
+            positions.append([row['Longitude'], row['Latitude']])
+        
+        kmc = KMeansClusteringManager(self.kmcGroupCount, positions)
+        kmcClusters = kmc.Fit()
+        print(kmcClusters)
 
     def ComboboxSelected(self, event):
         if (self.listingsData == None): return
