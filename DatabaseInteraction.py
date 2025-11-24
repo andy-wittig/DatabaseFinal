@@ -42,12 +42,17 @@ class DBManager():
         
         self.cur.execute(sqlCommand)
         rows = self.cur.fetchall()
-        self.conn.commit()
         
         return rows
 
     def GetHomeListingData(self):
         sqlQuery = f'SELECT * FROM public."{self.listingsTableName}";'
+        self.cur.execute(sqlQuery)
+        rows = self.cur.fetchall()
+        return rows
+    
+    def GetHomePositions(self):
+        sqlQuery = f'SELECT "Longitude", "Latitude" FROM public."{self.listingsTableName}";'
         self.cur.execute(sqlQuery)
         rows = self.cur.fetchall()
         return rows

@@ -3,6 +3,7 @@ import tkinter.scrolledtext as scrolledtext
 from tkinter import font
 from tkinter import ttk
 import math
+from KNN import KNNAlgorithm
 
 #User-Defined Routines lets one write wrapped-up SQL statements that can be started from application but run inside of Database. 
 
@@ -150,9 +151,9 @@ class UIManager():
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.RunKNN())
 
         self.organizationOptionsTitleLabel.pack()
-        self.SortPriceHighButton.pack(anchor = tk.CENTER)
-        self.SortPriceLowButton.pack(anchor = tk.CENTER)
-        self.knnFrame.pack(anchor = tk.CENTER)
+        self.SortPriceHighButton.pack(anchor = tk.CENTER, pady = 5)
+        self.SortPriceLowButton.pack(anchor = tk.CENTER, pady = 5)
+        self.knnFrame.pack(anchor = tk.CENTER, pady = 5)
         self.knnCombobox.pack(side = "left")
         self.knnRunButton.pack(side = "right")
 
@@ -169,8 +170,12 @@ class UIManager():
     def knnComboboxSelected(self, event):
         self.knnGroupCount = int(self.knnCombobox.get())
 
-    def RunnKNN():
-        pass
+    def RunnKNN(self):
+        positionData = self.databaseManager.GetHomePositions()
+        positions = []
+        for i, row in enumerate(positionData):
+            positions[i] = [row['Longitude'], row['Latitude']]
+        knn = KNNAlgorithm(self.knnGroupCount, positions)
 
     def ComboboxSelected(self, event):
         if (self.listingsData == None): return
