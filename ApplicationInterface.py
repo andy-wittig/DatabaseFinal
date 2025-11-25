@@ -17,12 +17,14 @@ class UIManager():
         #--- Style Variables ---
         self.defaultSize = [1280, 720]
 
-        self.titleFont = font.Font(family="Helvetica", size=18, weight = "bold")
-        self.buttonFont = font.Font(family="Helvetica", size=16)
-        self.textFont = font.Font(family="Helvetica", size=12)
+        self.titleFont = font.Font(family = "Helvetica", size = 18, weight = "bold")
+        self.buttonFont = font.Font(family = "Helvetica", size = 16)
+        self.smallButtonFont = font.Font(family = "Helvetica", size = 10)
+        self.textFont = font.Font(family = "Helvetica", size = 12)
         self.pageSize = 50
 
         self.bgColor      = "#3D3D3D"
+        self.highlightColor = "#B22222"
         self.panelColor   = "#666666"
         self.elementColor = "#898989"
         self.textColor    = "#E0E0E0"
@@ -87,6 +89,20 @@ class UIManager():
     def SetupHomeListingsWidgets(self):
         self.homeListingsTitleLabel = tk.Label(self.homeListingsFrame, text="Home Listings",
                                            bg = self.bgColor, fg = self.textColor, font = self.titleFont)
+        
+        #Page Options
+        self.pageOptionsContainer = tk.Frame(self.homeListingsFrame)
+        self.pageOptionsLabel = tk.Label(self.pageOptionsContainer, text="Page View:",
+                                           bg = self.bgColor, fg = self.textColor, font = self.textFont)
+        self.pageSelectLabel = tk.Label(self.pageOptionsContainer, text="Page Number:",
+                                           bg = self.bgColor, fg = self.textColor, font = self.textFont)
+        self.pageOptions = ['Find Listings', 'My Favorites']
+        self.pageTypeCombobox = ttk.Combobox(self.pageOptionsContainer, values = self.pageOptions)
+        self.pageTypeCombobox.bind("<<ComboboxSelected>>", self.PageTypeSelected)
+
+        self.combobox = ttk.Combobox(self.pageOptionsContainer, values = [])
+        self.combobox.bind("<<ComboboxSelected>>", self.ComboboxSelected)
+
         #Scrolling Container
         self.listingsContainer = tk.Frame(self.homeListingsFrame)
         self.listingsCanvas = tk.Canvas(self.listingsContainer, bg = self.panelColor)
@@ -116,13 +132,19 @@ class UIManager():
             "<Configure>",
             lambda e: self.listingsCanvas.itemconfig(self.scrollableFrameID, width = e.width)
         )
-
-        #Combobox
-        self.combobox = ttk.Combobox(self.homeListingsFrame, values = [])
-        self.combobox.bind("<<ComboboxSelected>>", self.ComboboxSelected)
         
+        #---Packing---
         self.homeListingsTitleLabel.pack()
-        self.combobox.pack()
+
+        self.pageOptionsContainer.grid_columnconfigure(0, weight = 1)
+        self.pageOptionsContainer.grid_columnconfigure(1, weight = 1)
+        self.pageOptionsContainer.grid_columnconfigure(2, weight = 1)
+        self.pageOptionsContainer.grid_columnconfigure(3, weight = 1)
+        self.pageOptionsContainer.pack()
+        self.pageOptionsLabel.grid(row = 0, column = 0)
+        self.pageTypeCombobox.grid(row = 0, column = 1)
+        self.pageSelectLabel.grid(row = 0, column = 2)
+        self.combobox.grid(row = 0, column = 3)
 
         self.listingsContainer.pack(fill = "both", expand = True)
         self.listingsCanvas.pack(side = "left", fill = "both", expand = True)
@@ -181,6 +203,28 @@ class UIManager():
         kmc = KMeansClusteringManager(self.kmcGroupCount, positions)
         kmcClusters = kmc.Fit()
 
+    def PageTypeSelected(self, event):
+        pageType = self.pageTypeCombobox.get()
+
+        self.ClearFrame(self.scrollableFrame)
+
+        if (pageType == self.pageOptions[0]): #Listings Page
+            self.generateListingsButton.config(state = tk.NORMAL)
+            self.cityTextBox.config(state = tk.NORMAL)
+            self.countryTextBox.config(state = tk.NORMAL)
+
+            #Populate Page
+            self.listingsData = self.databaseManager.GetHomeListingData()
+            self.SetupComboboxPages()
+        elif (pageType == self.pageOptions[1]): #Favorites Page
+            self.generateListingsButton.config(state = tk.DISABLED)
+            self.cityTextBox.config(state = tk.DISABLED)
+            self.countryTextBox.config(state = tk.DISABLED)
+
+            #Populate Page
+            self.listingsData = self.databaseManager.GetFavorites()
+            self.SetupComboboxPages()
+
     def ComboboxSelected(self, event):
         if (self.listingsData == None): return
 
@@ -214,13 +258,22 @@ class UIManager():
                 f"State: {_state}"
             )
 
-            #listingLabelContainer = tk.Frame(self.scrollableFrame, bg = self.bgColor)
-            listingLabel = tk.Label(self.scrollableFrame, text = listingInfo,
+            listingLabelContainer = tk.Frame(self.scrollableFrame, bg = self.bgColor)
+            listingLabel = tk.Label(listingLabelContainer, text = listingInfo,
                                     bg = self.bgColor, fg = self.textColor, 
-                                    font = self.textFont, justify = "left", anchor = "w")
+                                    font = self.textFont, wraplength = 320, justify = "left", anchor = "w")
+            favoriteButton = tk.Button(listingLabelContainer, text = "+ Favorite", 
+                                      bg = self.highlightColor, fg = self.textColor, font = self.smallButtonFont, command = lambda r = row: self.AddToFavorites(r))
             
-            #listingLabelContainer.pack(fill = "x", padx = 5, pady = 5)
-            listingLabel.pack(fill = "x", padx = 5, pady = 5)
+            favoriteButton.grid(row = 0, column = 1, sticky="ne")
+            listingLabel.grid(row = 0, column = 0, sticky="w")
+            listingLabelContainer.grid_columnconfigure(0, weight = 1)
+            listingLabelContainer.grid_columnconfigure(1, minsize = 70)
+            
+            listingLabelContainer.pack(fill = "x", padx = 5, pady = 5)
+
+    def AddToFavorites(self, listing):
+        self.databaseManager.AddToFavoritesTable(listing['ID'])
 
     def UpdateComboBoxOptions(self):
         pageOptions = []
@@ -229,7 +282,7 @@ class UIManager():
         self.combobox['values'] = pageOptions
         self.combobox.set("0")
 
-    def SetupComboboxPages(self):
+    def SetupComboboxPages(self): #ISSUE: pass in listingsData based if on favorites page or if on listings page
         self.lastPageCount = len(self.listingsData) % self.pageSize
         self.pageCount = math.floor(len(self.listingsData) / self.pageSize)
         if (self.lastPageCount > 0): self.pageCount += 1

@@ -14,6 +14,9 @@ class DBManager():
         self.dbPort = "5432"
 
         self.listingsTableName = "Listings"
+        self.usersTableName = "Users"
+        self.favoritesTableName = "Favorites"
+        
         self.sortQueryDict = {
             "PriceHigh" : "SQL_Scripts\SortByPriceHigh.sql",
             "PriceLow" : "SQL_Scripts\SortByPriceLow.sql",
@@ -68,13 +71,18 @@ class DBManager():
             print("Database NOT connected successfully")
             print("Error: ", e)
 
-        self.cur.execute("SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = %s;", (self.listingsTableName,))
+        self.CheckTablesExist(self.listingsTableName, "SQL_Scripts\CreateListingsTable.sql")
+        self.CheckTablesExist(self.usersTableName, "SQL_Scripts\CreateUsersTable.sql")
+        self.CheckTablesExist(self.favoritesTableName, "SQL_Scripts\CreateFavoritesTable.sql")
+
+    def CheckTablesExist(self, tableName, scriptPath):
+        self.cur.execute("SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = %s;", (tableName,))
         exists = self.cur.fetchone()
         if (not exists):
-            print ("Listings table nout found, creating one.")
-            self.ExecuteScript("SQL_Scripts\CreateListingsTable.sql")
+            print (f"{tableName} table was not found, creating one.")
+            self.ExecuteScript(scriptPath)
         else:
-            print ("Listings table was found.")
+            print (f"{tableName} table was found.")
     
     def ExecuteScript(self, scriptPath,  cursor = None):
         if (cursor == None): cursor = self.cur
@@ -113,7 +121,8 @@ class DBManager():
         )
 
         houseData = houseObj.houses_df #processed data
-        print(houseData.columns)
+        #print(houseData.columns)
+
         cols = ['"ID"', '"Bathrooms"', '"Bedrooms"', '"Size"', '"House Category"', '"Price"',
                 '"street name"', '"city"', '"state"', '"Latitude"', '"Longitude"', '"InsertedDate"']
         values = [tuple(x) for x in houseData.to_numpy()]
@@ -123,6 +132,17 @@ class DBManager():
         sqlCommand = f'INSERT INTO "{self.listingsTableName}" ({', '.join(cols)}) VALUES %s'
         execute_values(self.cur, sqlCommand, values)
         self.conn.commit()
+
+    def AddToFavoritesTable(self, listingID):
+        sqlCommand = f'INSERT INTO "{self.favoritesTableName}" (listing_id) VALUES (%s)'
+        self.cur.execute(sqlCommand, (listingID,))
+        self.conn.commit()
+
+    def GetFavorites(self):
+        sqlQuery = f'SELECT L.* FROM public."{self.listingsTableName}" L JOIN public."{self.favoritesTableName}" F ON F."listing_id" = L."ID";'
+        self.cur.execute(sqlQuery)
+        rows = self.cur.fetchall()
+        return rows
 
     def CloseDataBase(self):
         self.cur.close()

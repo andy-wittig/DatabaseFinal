@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS public."Listings"
     "Latitude" real,
     "Longitude" real,
     "InsertedDate" date,
-    "ID" bigint
+    "ID" bigint NOT NULL,
+    CONSTRAINT "Listings_pkey" PRIMARY KEY ("ID")
 )
 
 TABLESPACE pg_default;
