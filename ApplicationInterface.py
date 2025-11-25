@@ -265,13 +265,16 @@ class UIManager():
             listingLabel = tk.Label(listingLabelContainer, text = listingInfo,
                                     bg = self.bgColor, fg = self.textColor, 
                                     font = self.textFont, wraplength = 320, justify = "left", anchor = "w")
-            favoriteButton = tk.Button(listingLabelContainer, text = "+ Favorite", 
-                                      bg = self.highlightColor, fg = self.textColor, font = self.smallButtonFont, command = lambda r = row: self.AddToFavorites(r))
             
-            favoriteButton.grid(row = 0, column = 1, sticky="ne")
+            if (self.databaseManager.currentPageTable == self.databaseManager.listingsTableName):
+                favoriteButton = tk.Button(listingLabelContainer, text = "+ Favorite", 
+                                        bg = self.highlightColor, fg = self.textColor, font = self.smallButtonFont, command = lambda r = row: self.AddToFavorites(r))
+            
+                favoriteButton.grid(row = 0, column = 1, sticky="ne")
+                listingLabelContainer.grid_columnconfigure(1, minsize = 70)
+
             listingLabel.grid(row = 0, column = 0, sticky="w")
             listingLabelContainer.grid_columnconfigure(0, weight = 1)
-            listingLabelContainer.grid_columnconfigure(1, minsize = 70)
             
             listingLabelContainer.pack(fill = "x", padx = 5, pady = 5)
 
