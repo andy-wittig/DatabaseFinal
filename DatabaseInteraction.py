@@ -16,6 +16,7 @@ class DBManager():
         self.listingsTableName = "Listings"
         self.usersTableName = "Users"
         self.favoritesTableName = "Favorites"
+        self.currentPageTable = self.listingsTableName
         
         self.sortQueryDict = {
             "PriceHigh" : "SQL_Scripts\SortByPriceHigh.sql",
@@ -104,7 +105,10 @@ class DBManager():
         return rows
     
     def GetHomePositions(self):
-        sqlQuery = f'SELECT "Longitude", "Latitude" FROM public."{self.listingsTableName}";'
+        if (self.currentPageTable == self.listingsTableName):
+            sqlQuery = f'SELECT "Longitude", "Latitude" FROM public."{self.listingsTableName}";'
+        elif (self.currentPageTable == self.favoritesTableName):
+            sqlQuery = f'SELECT "Longitude", "Latitude" FROM public."{self.listingsTableName}" L JOIN public."{self.favoritesTableName}" F ON F."listing_id" = L."ID";'
         self.cur.execute(sqlQuery)
         rows = self.cur.fetchall()
         return rows

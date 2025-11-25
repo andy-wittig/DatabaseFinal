@@ -209,6 +209,7 @@ class UIManager():
         self.ClearFrame(self.scrollableFrame)
 
         if (pageType == self.pageOptions[0]): #Listings Page
+            self.databaseManager.currentPageTable = self.databaseManager.listingsTableName
             self.generateListingsButton.config(state = tk.NORMAL)
             self.cityTextBox.config(state = tk.NORMAL)
             self.countryTextBox.config(state = tk.NORMAL)
@@ -217,6 +218,8 @@ class UIManager():
             self.listingsData = self.databaseManager.GetHomeListingData()
             self.SetupComboboxPages()
         elif (pageType == self.pageOptions[1]): #Favorites Page
+            self.databaseManager.currentPageTable = self.databaseManager.favoritesTableName
+
             self.generateListingsButton.config(state = tk.DISABLED)
             self.cityTextBox.config(state = tk.DISABLED)
             self.countryTextBox.config(state = tk.DISABLED)
