@@ -2,6 +2,7 @@ from typing import List
 from collections import Counter
 import numpy as np
 import matplotlib.pyplot as plt
+import smopy
 
 class KMeansClusteringManager():
     def __init__(self, groupCount, points: List):
@@ -24,10 +25,34 @@ class KMeansClusteringManager():
                 break
 
         pred = self.PredictCluster(X, clusters)
-        plt.scatter(X[:, 0], X[:, 1], c = pred)
+
+        latMin, latMax = X[:,1].min(), X[:,1].max()
+        lonMin, lonMax = X[:,0].min(), X[:,0].max()
+
+        bounds = (
+            latMin,
+            lonMin,
+            latMax,
+            lonMax
+        )
+
+        map = smopy.Map(bounds)
+
+        xPx, yPx = map.to_pixels(X[:,1], X[:,0])
+       
+        fig, ax = plt.subplots()
+        img = map.to_pil()
+
+        ax.imshow(img)
+        ax.set_xlim(0, map.w)
+        ax.set_ylim(map.h, 0)
+
+        ax.scatter(xPx, yPx, c=pred, s=40)
         for i in range(self.k):
-            center = clusters[i]['center']
-            plt.scatter(center[0], center[1], marker = '^', c = 'red')
+            lon, lat = clusters[i]['center']
+            cx, cy = map.to_pixels(lon, lat)
+            ax.scatter(cx, cy, marker='^', c='red', s=120)
+
         plt.show()
 
         return clusters
