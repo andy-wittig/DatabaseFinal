@@ -22,14 +22,15 @@ class UIManager():
         self.defaultSize = [1280, 720]
 
         self.titleFont = font.Font(family = "Helvetica", size = 18, weight = "bold")
-        self.buttonFont = font.Font(family = "Helvetica", size = 16)
-        self.smallButtonFont = font.Font(family = "Helvetica", size = 10)
+        self.buttonFont = font.Font(family = "Helvetica", size = 16, weight = "bold")
+        self.smallButtonFont = font.Font(family = "Helvetica", size = 12)
         self.textFont = font.Font(family = "Helvetica", size = 12)
         self.pageSize = 50
 
         self.bgColor      = "#3D3D3D"
         self.highlightColor = "#B22222"
-        self.accentColor = "#11589a"
+        self.accentColor = "#536878"
+        self.titleColor = "#6e7f80"
         self.panelColor   = "#666666"
         self.elementColor = "#898989"
         self.textColor    = "#E0E0E0"
@@ -91,15 +92,15 @@ class UIManager():
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = self.Export)
 
         self.exportTitleLabel = tk.Label(self.exportFrame, text="Export Home Listings", 
-                                    bg = self.bgColor, fg = self.textColor, font = self.titleFont)
+                                    bg = self.titleColor, fg = self.textColor, font = self.titleFont)
 
-        self.exportTitleLabel.pack()
+        self.exportTitleLabel.pack(fill = "x")
         self.exportPreview.pack(fill = "both", expand = True)
         self.exportButton.pack(fill = "x")
 
     def SetupHomeListingsWidgets(self):
         self.homeListingsTitleLabel = tk.Label(self.homeListingsFrame, text="Home Listings",
-                                           bg = self.bgColor, fg = self.textColor, font = self.titleFont)
+                                           bg = self.titleColor, fg = self.textColor, font = self.titleFont)
         
         #Page Options
         self.pageOptionsContainer = tk.Frame(self.homeListingsFrame)
@@ -145,7 +146,7 @@ class UIManager():
         )
         
         #---Packing---
-        self.homeListingsTitleLabel.pack()
+        self.homeListingsTitleLabel.pack(fill = "x")
 
         self.pageOptionsContainer.grid_columnconfigure(0, weight = 1)
         self.pageOptionsContainer.grid_columnconfigure(1, weight = 1)
@@ -168,7 +169,7 @@ class UIManager():
 
     def SetupOrganizationOptionsWidgets(self):
         self.organizationOptionsTitleLabel = tk.Label(self.organizationOptionsFrame, text="Organize Listings",
-                                                  bg = self.bgColor, fg = self.textColor, font = self.titleFont)
+                                                  bg = self.titleColor, fg = self.textColor, font = self.titleFont)
         
         #Add New User
         self.userValues = self.databaseManager.GetUsers()
@@ -200,7 +201,7 @@ class UIManager():
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.RunKMC())
 
         #Packing
-        self.organizationOptionsTitleLabel.pack()
+        self.organizationOptionsTitleLabel.pack(fill = "x")
 
         self.selectUserFrame.pack(padx = 5, pady = 5)
         self.userSelectLabel.pack(fill = "x", expand = True, side = "left")
