@@ -230,17 +230,19 @@ class UIManager():
         positionData = self.databaseManager.GetHomePositions(self.currentUser)
         if (len(positionData) < 1): return
 
-        positions = []
+        points = []
         for row in positionData:
-            positions.append([row['Longitude'], row['Latitude']])
+            points.append([row['Longitude'], row['Latitude']])
         
-        kmc = KMeansClusteringManager(self.kmcGroupCount, positions)
+        kmc = KMeansClusteringManager(self.kmcGroupCount, points)
         kmcClusters = kmc.Fit()
 
         for id, data in kmcClusters.items():
             self.exportPreview.insert(tk.END, f"Cluster ID: {id}\n")
             for p in data["points"]:
-                self.exportPreview.insert(tk.END, f"({p[0]}, {p[1]})\n")
+                address = self.databaseManager.GetAddressFromPoint((p[0]), (p[1]))
+                self.exportPreview.insert(tk.END, f"({p[0]}, {p[1]}):\n")
+                self.exportPreview.insert(tk.END, f"    {address}\n")
             self.exportPreview.insert(tk.END, "\n")
 
     def Export(self):

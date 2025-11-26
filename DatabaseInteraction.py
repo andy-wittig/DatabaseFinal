@@ -104,14 +104,31 @@ class DBManager():
         rows = self.cur.fetchall()
         return rows
     
+    def GetAddressFromPoint(self, px, py):
+        px = float(px)
+        py = float(py)
+
+        tolerance = 1e-5
+        sqlQuery = f'''
+            SELECT "street name" 
+            FROM public."{self.listingsTableName}" 
+            WHERE "Longitude" BETWEEN %s AND %s
+            AND "Latitude" BETWEEN %s AND %s;
+        '''
+        self.cur.execute(sqlQuery, (px - tolerance, px + tolerance, py - tolerance, py + tolerance))
+        row = self.cur.fetchone()
+        if not row:
+            return None
+        return row['street name']
+    
     def GetHomePositions(self, userName):
         userID = self.GetUserID(userName)
 
         if (self.currentPageTable == self.listingsTableName):
-            sqlQuery = f'SELECT "Longitude", "Latitude" FROM public."{self.listingsTableName}";'
+            sqlQuery = f'SELECT "Longitude", "Latitude", "street name" FROM public."{self.listingsTableName}";'
         elif (self.currentPageTable == self.favoritesTableName):
             sqlQuery = (
-                    f'SELECT "Longitude", "Latitude" '
+                    f'SELECT "Longitude", "Latitude", "street name" '
                     f'FROM public."{self.listingsTableName}" L '
                     f'JOIN public."{self.favoritesTableName}" F '
                     f'ON F."listing_id" = L."ID" WHERE F.user_id = %s;'

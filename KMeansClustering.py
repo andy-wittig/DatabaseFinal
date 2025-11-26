@@ -47,11 +47,11 @@ class KMeansClusteringManager():
         ax.set_xlim(0, map.w)
         ax.set_ylim(map.h, 0)
 
-        ax.scatter(xPx, yPx, c=pred, s=40)
+        ax.scatter(xPx, yPx, c = pred, s = 40)
         for i in range(self.k):
             lon, lat = clusters[i]['center']
             cx, cy = map.to_pixels(lon, lat)
-            ax.scatter(cx, cy, marker='^', c='red', s=120)
+            ax.scatter(cx, cy, marker='^', c = 'red', s = 120)
 
         plt.show()
 
@@ -69,7 +69,7 @@ class KMeansClusteringManager():
             points = []
             cluster = {
                 'center' : center,
-                'points' : []
+                'points' : [],
             }
 
             clusters[index] = cluster
