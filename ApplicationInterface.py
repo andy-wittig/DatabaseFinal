@@ -4,6 +4,8 @@ from tkinter import font
 from tkinter import ttk
 import math
 from KMeansClustering import KMeansClusteringManager
+from fpdf import FPDF
+from tkinter import filedialog
 
 #User-Defined Routines lets one write wrapped-up SQL statements that can be started from application but run inside of Database. 
 
@@ -241,14 +243,18 @@ class UIManager():
             self.exportPreview.insert(tk.END, f"Cluster ID: {id}\n")
             for p in data["points"]:
                 address = self.databaseManager.GetAddressFromPoint((p[0]), (p[1]))
-                self.exportPreview.insert(tk.END, f"({p[0]}, {p[1]}):\n")
-                self.exportPreview.insert(tk.END, f"    {address}\n")
+                self.exportPreview.insert(tk.END, f"-    {address}\n")
             self.exportPreview.insert(tk.END, "\n")
 
     def Export(self):
         text = self.exportPreview.get("1.0", "end-1c")
         #Convert to PDF here!
-        pass
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 16)
+        pdf.multi_cell(w = 0, h = 6, txt = text, border = 0, align = 'L')
+        filepath = filedialog.asksaveasfilename(defaultextension = ".pdf")
+        pdf.output(filepath, 'F')
 
     def PageTypeSelected(self, event):
         pageType = self.pageTypeCombobox.get()
