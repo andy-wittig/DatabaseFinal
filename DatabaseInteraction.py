@@ -147,6 +147,12 @@ class DBManager():
         self.cur.execute(sqlQuery)
         rows = self.cur.fetchall()
         return rows
+    
+    def IsFavorited(self, listingID):
+        sqlQuery = f'SELECT 1 FROM public."{self.favoritesTableName}" WHERE listing_id = %s'
+        self.cur.execute(sqlQuery, (listingID,))
+        response = self.cur.fetchone()
+        return response is not None
 
     def CloseDataBase(self):
         self.cur.close()

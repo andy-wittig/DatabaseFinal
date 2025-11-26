@@ -228,6 +228,9 @@ class UIManager():
             self.listingsData = self.databaseManager.GetFavorites()
             self.SetupComboboxPages()
 
+    def FlagSelected(self, event):
+        pass
+
     def ComboboxSelected(self, event):
         if (self.listingsData == None): return
 
@@ -249,8 +252,8 @@ class UIManager():
             _latitude = row['Latitude']
             _longitude = row['Longitude']
 
-            listingInfo = (
-                f"Listing Number {count}\n"
+            listingInfoText = (
+                f"---{count}---\n"
                 f"Bathrooms: {_bathrooms}\n"
                 f"Bedrooms: {_bedrooms}\n"
                 f"Size: {_size}\n"
@@ -261,24 +264,38 @@ class UIManager():
                 f"State: {_state}"
             )
 
-            listingLabelContainer = tk.Frame(self.scrollableFrame, bg = self.bgColor)
-            listingLabel = tk.Label(listingLabelContainer, text = listingInfo,
+            listingContainer = tk.Frame(self.scrollableFrame, bg = self.bgColor)
+            listingContainer.grid_columnconfigure(0, weight = 1)
+            listingContainer.grid_columnconfigure(1, weight = 0)
+            listingContainer.grid_rowconfigure(0, weight=1)
+
+            listingLabel = tk.Label(listingContainer, text = listingInfoText,
                                     bg = self.bgColor, fg = self.textColor, 
                                     font = self.textFont, wraplength = 320, justify = "left", anchor = "w")
             
+            listingOptionsContainer = tk.Frame(listingContainer, bg = self.panelColor)
+            listingOptionsContainer.grid(row = 0, column = 1, sticky = "nsew", padx = 5, pady = 5)
+
             if (self.databaseManager.currentPageTable == self.databaseManager.listingsTableName):
-                favoriteButton = tk.Button(listingLabelContainer, text = "+ Favorite", 
-                                        bg = self.highlightColor, fg = self.textColor, font = self.smallButtonFont, command = lambda r = row: self.AddToFavorites(r))
-            
-                favoriteButton.grid(row = 0, column = 1, sticky="ne")
-                listingLabelContainer.grid_columnconfigure(1, minsize = 70)
+                favoriteButton = tk.Button(listingOptionsContainer, text = "+ Favorite", 
+                                        bg = self.highlightColor, fg = self.textColor, font = self.smallButtonFont)
+                favoriteButton.config(command = lambda r = row, b = favoriteButton: self.AddToFavorites(r, b))
+
+                if (self.databaseManager.IsFavorited(row['ID'])):
+                    favoriteButton.config(state = tk.DISABLED, bg = self.bgColor)
+
+                favoriteButton.pack(padx = 5, pady = 5)
+
+            flagOptions = ['Love', 'Like', 'Pass']
+            flagCombobox = ttk.Combobox(listingOptionsContainer, values = flagOptions)
+            flagCombobox.bind("<<ComboboxSelected>>", self.FlagSelected)
+            flagCombobox.pack(padx = 5, pady = 5)
 
             listingLabel.grid(row = 0, column = 0, sticky="w")
-            listingLabelContainer.grid_columnconfigure(0, weight = 1)
-            
-            listingLabelContainer.pack(fill = "x", padx = 5, pady = 5)
+            listingContainer.pack(fill = "x", padx = 5, pady = 5)
 
-    def AddToFavorites(self, listing):
+    def AddToFavorites(self, listing, button):
+        button.config(state = tk.DISABLED, bg = self.bgColor)
         self.databaseManager.AddToFavoritesTable(listing['ID'])
 
     def UpdateComboBoxOptions(self):
