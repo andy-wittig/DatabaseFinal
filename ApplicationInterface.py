@@ -35,6 +35,11 @@ class UIManager():
         self.kmcGroupCountOptions = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
         #----------------------
 
+        #--- User Variables ----
+        self.userValues = []
+        self.currentUser = ''
+        #-----------------------
+
         self.SetupWindow()
 
         self.root.mainloop()
@@ -74,7 +79,6 @@ class UIManager():
         self.exportPreview = scrolledtext.ScrolledText(self.exportFrame, bg=self.panelColor,
                                                         state="disabled", wrap = tk.WORD,
                                                         padx = 10, pady = 10)
-        #self.exportPreview.vbar.config(troughcolor = self.bgColor, bg = self.elementColor)
 
         self.exportButton = tk.Button(self.exportFrame, text = "Export", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont)
@@ -93,9 +97,9 @@ class UIManager():
         #Page Options
         self.pageOptionsContainer = tk.Frame(self.homeListingsFrame)
         self.pageOptionsLabel = tk.Label(self.pageOptionsContainer, text="Page View:",
-                                           bg = self.bgColor, fg = self.textColor, font = self.textFont)
+                                           bg = self.panelColor, fg = self.textColor, font = self.textFont)
         self.pageSelectLabel = tk.Label(self.pageOptionsContainer, text="Page Number:",
-                                           bg = self.bgColor, fg = self.textColor, font = self.textFont)
+                                           bg = self.panelColor, fg = self.textColor, font = self.textFont)
         self.pageOptions = ['Find Listings', 'My Favorites']
         self.pageTypeCombobox = ttk.Combobox(self.pageOptionsContainer, values = self.pageOptions)
         self.pageTypeCombobox.bind("<<ComboboxSelected>>", self.PageTypeSelected)
@@ -159,23 +163,47 @@ class UIManager():
         self.organizationOptionsTitleLabel = tk.Label(self.organizationOptionsFrame, text="Organize Listings",
                                                   bg = self.bgColor, fg = self.textColor, font = self.titleFont)
         
-        #Sort By options
+        #Add New User
+        self.userValues = self.databaseManager.GetUsers()
+
+        self.selectUserFrame = tk.Frame(self.organizationOptionsFrame, bg = self.panelColor)
+        self.userSelectLabel = tk.Label(self.selectUserFrame, text="Select User: ",
+                                                  bg = self.panelColor, fg = self.textColor, font = self.textFont)
+        self.userCombobox = ttk.Combobox(self.selectUserFrame, values = self.userValues)
+        self.userCombobox.bind("<<ComboboxSelected>>", self.UserSelected)
+        self.addUserFrame = tk.Frame(self.organizationOptionsFrame, bg = self.panelColor)
+        self.userEntryBox = tk.Entry(self.addUserFrame, bg = self.elementColor, font = self.textFont)
+        self.addUserButton = tk.Button(self.addUserFrame, text = "Add User", 
+                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.AddUser())
+        
+        #Sort By Options
         self.SortPriceHighButton = tk.Button(self.organizationOptionsFrame, text = "Sort by Price: Highest", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.SortBy("PriceHigh"))
         self.SortPriceLowButton = tk.Button(self.organizationOptionsFrame, text = "Sort by Price: Lowest", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.SortBy("PriceLow"))
         
         #kmc Grouping
-        self.kmcFrame = tk.Frame(self.organizationOptionsFrame)
+        self.kmcFrame = tk.Frame(self.organizationOptionsFrame, bg = self.panelColor)
         self.kmcCombobox = ttk.Combobox(self.kmcFrame, values = self.kmcGroupCountOptions)
         self.kmcCombobox.bind("<<ComboboxSelected>>", self.KMCComboboxSelected)
         self.kmcRunButton = tk.Button(self.kmcFrame, text = "Run kmc Algorithm", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.RunKMC())
 
+        #Packing
         self.organizationOptionsTitleLabel.pack()
+
+        self.selectUserFrame.pack(padx = 10, pady = 10)
+        self.userSelectLabel.pack(fill = "x", expand = True, side = "left")
+        self.userCombobox.pack(fill = "x", expand = True, side = "right")
+
+        self.addUserFrame.pack(padx = 10, pady = 10)
+        self.userEntryBox.pack(fill = "x", expand = True, side = "left")
+        self.addUserButton.pack(fill = "x", expand = True, side = "right")
+
         self.SortPriceHighButton.pack(anchor = tk.CENTER, pady = 5)
         self.SortPriceLowButton.pack(anchor = tk.CENTER, pady = 5)
-        self.kmcFrame.pack(anchor = tk.CENTER, pady = 5)
+
+        self.kmcFrame.pack(anchor = tk.CENTER, padx = 10, pady = 10)
         self.kmcCombobox.pack(side = "left")
         self.kmcRunButton.pack(side = "right")
 
@@ -220,16 +248,27 @@ class UIManager():
         elif (pageType == self.pageOptions[1]): #Favorites Page
             self.databaseManager.currentPageTable = self.databaseManager.favoritesTableName
 
+            #Disable widgets relating to favorites
             self.generateListingsButton.config(state = tk.DISABLED)
             self.cityTextBox.config(state = tk.DISABLED)
             self.countryTextBox.config(state = tk.DISABLED)
+            #---
 
             #Populate Page
-            self.listingsData = self.databaseManager.GetFavorites()
+            self.listingsData = self.databaseManager.GetFavorites(self.currentUser)
             self.SetupComboboxPages()
 
     def FlagSelected(self, event):
         pass
+
+    def UserSelected(self, event):
+        self.currentUser = self.userCombobox.get()
+
+    def AddUser(self):
+        userName = self.userEntryBox.get()
+        if (self.databaseManager.AddToUserTable(userName)):
+            self.userValues.append(userName)
+            self.userCombobox.configure(values = self.userValues)
 
     def ComboboxSelected(self, event):
         if (self.listingsData == None): return
@@ -305,7 +344,9 @@ class UIManager():
         self.combobox['values'] = pageOptions
         self.combobox.set("0")
 
-    def SetupComboboxPages(self): #ISSUE: pass in listingsData based if on favorites page or if on listings page
+    def SetupComboboxPages(self):
+        if (self.listingsData == None): return
+
         self.lastPageCount = len(self.listingsData) % self.pageSize
         self.pageCount = math.floor(len(self.listingsData) / self.pageSize)
         if (self.lastPageCount > 0): self.pageCount += 1
@@ -324,6 +365,6 @@ class UIManager():
         self.SetupComboboxPages()
         #---
 
-    def SortBy(self, sortType):
+    def SortBy(self, sortType): #ISSUE: Favorites are sorted by the listings table, and not by the favorites!
         self.listingsData = self.databaseManager.ExecuteScript(self.databaseManager.sortQueryDict[sortType])
         self.SetupComboboxPages()

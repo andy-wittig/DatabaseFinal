@@ -138,11 +138,15 @@ class DBManager():
         self.conn.commit()
 
     def AddToFavoritesTable(self, listingID):
+        if (self.IsFavorited(listingID)): return
+
         sqlCommand = f'INSERT INTO "{self.favoritesTableName}" (listing_id) VALUES (%s)'
         self.cur.execute(sqlCommand, (listingID,))
         self.conn.commit()
 
-    def GetFavorites(self):
+    def GetFavorites(self, userName):
+        if (userName == ""): return
+        
         sqlQuery = f'SELECT L.* FROM public."{self.listingsTableName}" L JOIN public."{self.favoritesTableName}" F ON F."listing_id" = L."ID";'
         self.cur.execute(sqlQuery)
         rows = self.cur.fetchall()
@@ -153,6 +157,32 @@ class DBManager():
         self.cur.execute(sqlQuery, (listingID,))
         response = self.cur.fetchone()
         return response is not None
+    
+    def GetUsers(self):
+        sqlQuery = f'SELECT username FROM public."{self.usersTableName}";'
+        self.cur.execute(sqlQuery)
+        rows = self.cur.fetchall()
+
+        userList = []
+        for row in rows:
+            userList.append(row['username'])
+
+        return userList
+
+    def DoesUserExist(self, name):
+        sqlQuery = f'SELECT 1 FROM public."{self.usersTableName}" WHERE username = %s'
+        self.cur.execute(sqlQuery, (name,))
+        response = self.cur.fetchone()
+        return response is not None
+    
+    def AddToUserTable(self, name):
+        if (self.DoesUserExist(name)): return False
+
+        sqlCommand = f'INSERT INTO "{self.usersTableName}" (username) VALUES (%s)'
+        self.cur.execute(sqlCommand, (name,))
+        self.conn.commit()
+
+        return True
 
     def CloseDataBase(self):
         self.cur.close()
