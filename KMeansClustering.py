@@ -52,10 +52,9 @@ class KMeansClusteringManager():
             lon, lat = clusters[i]['center']
             cx, cy = map.to_pixels(lon, lat)
             ax.scatter(cx, cy, marker='^', c = 'red', s = 120)
+        #plt.show()
 
-        plt.show()
-
-        return clusters
+        return clusters, fig
 
     def EuclideanDistance(self, point1, point2):
         return np.sqrt(np.sum((np.array(point1) - np.array(point2))**2))

@@ -6,6 +6,8 @@ import math
 from KMeansClustering import KMeansClusteringManager
 from fpdf import FPDF
 from tkinter import filedialog
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 #User-Defined Routines lets one write wrapped-up SQL statements that can be started from application but run inside of Database. 
 
@@ -27,6 +29,7 @@ class UIManager():
 
         self.bgColor      = "#3D3D3D"
         self.highlightColor = "#B22222"
+        self.accentColor = "#11589a"
         self.panelColor   = "#666666"
         self.elementColor = "#898989"
         self.textColor    = "#E0E0E0"
@@ -101,9 +104,9 @@ class UIManager():
         #Page Options
         self.pageOptionsContainer = tk.Frame(self.homeListingsFrame)
         self.pageOptionsLabel = tk.Label(self.pageOptionsContainer, text="Page View:",
-                                           bg = self.panelColor, fg = self.textColor, font = self.textFont)
+                                           bg = self.accentColor, fg = self.textColor, font = self.textFont)
         self.pageSelectLabel = tk.Label(self.pageOptionsContainer, text="Page Number:",
-                                           bg = self.panelColor, fg = self.textColor, font = self.textFont)
+                                           bg = self.accentColor, fg = self.textColor, font = self.textFont)
         self.pageOptions = ['Find Listings', 'My Favorites']
         self.pageTypeCombobox = ttk.Combobox(self.pageOptionsContainer, values = self.pageOptions)
         self.pageTypeCombobox.bind("<<ComboboxSelected>>", self.PageTypeSelected)
@@ -121,7 +124,7 @@ class UIManager():
         self.cityTextBox = tk.Entry(self.TextBoxContainer, bg = self.elementColor, font = self.textFont)
         self.countryTextBox = tk.Entry(self.TextBoxContainer, bg = self.elementColor, font = self.textFont)
         self.generateListingsButton = tk.Button(self.homeListingsFrame, text = "Generate Listings", 
-                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = self.GenerateListings)
+                                      bg = self.accentColor, fg = self.textColor, font = self.buttonFont, command = self.GenerateListings)
         
         self.cityTextBox.insert(0, 'Sparks')
         self.countryTextBox.insert(0, 'United States')
@@ -159,8 +162,8 @@ class UIManager():
         self.listingsScrollBar.pack(side = "right", fill = "y")
 
         self.TextBoxContainer.pack(fill = "x")
-        self.cityTextBox.pack(side = "left", expand = True, fill = "x", padx = 5)
-        self.countryTextBox.pack(side = "left", expand = True, fill = "x", padx = 5)
+        self.cityTextBox.pack(side = "left", expand = True, fill = "x", padx = 5, pady = 5)
+        self.countryTextBox.pack(side = "left", expand = True, fill = "x", padx = 5, pady = 5)
         self.generateListingsButton.pack(fill = "x")
 
     def SetupOrganizationOptionsWidgets(self):
@@ -172,7 +175,7 @@ class UIManager():
 
         self.selectUserFrame = tk.Frame(self.organizationOptionsFrame, bg = self.panelColor)
         self.userSelectLabel = tk.Label(self.selectUserFrame, text="Select User: ",
-                                                  bg = self.panelColor, fg = self.textColor, font = self.textFont)
+                                                  bg = self.accentColor, fg = self.textColor, font = self.textFont)
         self.userCombobox = ttk.Combobox(self.selectUserFrame, values = self.userValues)
         self.userCombobox.bind("<<ComboboxSelected>>", self.UserSelected)
         self.addUserFrame = tk.Frame(self.organizationOptionsFrame, bg = self.panelColor)
@@ -217,6 +220,8 @@ class UIManager():
         self.kmcFrame.pack(anchor = "w", pady = 10)
         self.kmcCombobox.pack(side = "left")
         self.kmcRunButton.pack(side = "right")
+        self.kmcCanvasFrame = tk.Canvas(self.organizationOptionsFrame, bg = self.bgColor)
+        self.kmcCanvasFrame.pack(fill = tk.BOTH, expand = True)
 
     def AddExportPreviewText(self, text): #Enables and re-enables text-scrollable widget to not allow user input.
         self.exportPreview.delete("1.0", tk.END) #Erases all text content from starting index to end.
@@ -239,9 +244,16 @@ class UIManager():
         for row in positionData:
             points.append([row['Longitude'], row['Latitude']])
         
+        #Add plot to canvas
         kmc = KMeansClusteringManager(self.kmcGroupCount, points)
-        kmcClusters = kmc.Fit()
+        kmcClusters, plotFigure = kmc.Fit()
 
+        self.ClearFrame(self.kmcCanvasFrame)
+        canvas = FigureCanvasTkAgg(plotFigure, master = self.kmcCanvasFrame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill = tk.BOTH, expand = True)
+
+        #Add data to export preview
         for id, data in kmcClusters.items():
             self.exportPreview.insert(tk.END, f"Cluster ID: {id}\n")
             for p in data["points"]:
