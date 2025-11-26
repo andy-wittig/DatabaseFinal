@@ -208,10 +208,13 @@ class UIManager():
         self.addUserButton.pack(fill = "x", expand = True, side = "right")
         self.removeUserButton.pack(padx = 5, pady = 5)
 
-        self.SortPriceHighButton.pack(anchor = tk.CENTER, pady = 5)
-        self.SortPriceLowButton.pack(anchor = tk.CENTER, pady = 5)
+        self.spacerFrame = tk.Frame(self.organizationOptionsFrame)
+        self.spacerFrame.pack(pady = 40)
 
-        self.kmcFrame.pack(anchor = tk.CENTER, padx = 10, pady = 10)
+        self.SortPriceHighButton.pack(anchor = "w", pady = 5)
+        self.SortPriceLowButton.pack(anchor = "w", pady = 5)
+
+        self.kmcFrame.pack(anchor = "w", pady = 10)
         self.kmcCombobox.pack(side = "left")
         self.kmcRunButton.pack(side = "right")
 
@@ -340,7 +343,7 @@ class UIManager():
                 f"Bedrooms: {_bedrooms}\n"
                 f"Size: {_size}\n"
                 f"House Category: {_houseCategory}\n"
-                f"Price: {_price}\n"
+                f"Price: ${_price}\n"
                 f"Street: {_streetName}\n"
                 f"City: {_city}\n"
                 f"State: {_state}"
