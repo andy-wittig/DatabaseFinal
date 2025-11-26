@@ -78,12 +78,12 @@ class UIManager():
         self.SetupDefaultUser()
         
     def SetupExportWidgets(self):
-        self.exportPreview = scrolledtext.ScrolledText(self.exportFrame, bg=self.panelColor,
+        self.exportPreview = scrolledtext.ScrolledText(self.exportFrame, bg=self.panelColor, fg = self.textColor, font = self.textFont,
                                                         state="normal", wrap = tk.WORD,
                                                         padx = 10, pady = 10)
 
         self.exportButton = tk.Button(self.exportFrame, text = "Export", 
-                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont)
+                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = self.Export)
 
         self.exportTitleLabel = tk.Label(self.exportFrame, text="Export Home Listings", 
                                     bg = self.bgColor, fg = self.textColor, font = self.titleFont)
@@ -242,6 +242,11 @@ class UIManager():
             for p in data["points"]:
                 self.exportPreview.insert(tk.END, f"({p[0]}, {p[1]})\n")
             self.exportPreview.insert(tk.END, "\n")
+
+    def Export(self):
+        text = self.exportPreview.get("1.0", "end-1c")
+        #Convert to PDF here!
+        pass
 
     def PageTypeSelected(self, event):
         pageType = self.pageTypeCombobox.get()
