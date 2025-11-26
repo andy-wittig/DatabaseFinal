@@ -74,10 +74,12 @@ class UIManager():
         self.SetupHomeListingsWidgets()
         self.SetupOrganizationOptionsWidgets()
         #--------------------------
+
+        self.SetupDefaultUser()
         
     def SetupExportWidgets(self):
         self.exportPreview = scrolledtext.ScrolledText(self.exportFrame, bg=self.panelColor,
-                                                        state="disabled", wrap = tk.WORD,
+                                                        state="normal", wrap = tk.WORD,
                                                         padx = 10, pady = 10)
 
         self.exportButton = tk.Button(self.exportFrame, text = "Export", 
@@ -176,6 +178,9 @@ class UIManager():
         self.addUserButton = tk.Button(self.addUserFrame, text = "Add User", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.AddUser())
         
+        self.removeUserButton = tk.Button(self.organizationOptionsFrame, text = "Remove User", 
+                                      bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.RemoveUser())
+
         #Sort By Options
         self.SortPriceHighButton = tk.Button(self.organizationOptionsFrame, text = "Sort by Price: Highest", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.SortBy("PriceHigh"))
@@ -192,13 +197,14 @@ class UIManager():
         #Packing
         self.organizationOptionsTitleLabel.pack()
 
-        self.selectUserFrame.pack(padx = 10, pady = 10)
+        self.selectUserFrame.pack(padx = 5, pady = 5)
         self.userSelectLabel.pack(fill = "x", expand = True, side = "left")
         self.userCombobox.pack(fill = "x", expand = True, side = "right")
 
-        self.addUserFrame.pack(padx = 10, pady = 10)
+        self.addUserFrame.pack(padx = 5, pady = 5)
         self.userEntryBox.pack(fill = "x", expand = True, side = "left")
         self.addUserButton.pack(fill = "x", expand = True, side = "right")
+        self.removeUserButton.pack(padx = 5, pady = 5)
 
         self.SortPriceHighButton.pack(anchor = tk.CENTER, pady = 5)
         self.SortPriceLowButton.pack(anchor = tk.CENTER, pady = 5)
@@ -221,7 +227,7 @@ class UIManager():
         self.kmcGroupCount = int(self.kmcCombobox.get())
 
     def RunKMC(self):
-        positionData = self.databaseManager.GetHomePositions()
+        positionData = self.databaseManager.GetHomePositions(self.currentUser)
         if (len(positionData) < 1): return
 
         positions = []
@@ -231,6 +237,12 @@ class UIManager():
         kmc = KMeansClusteringManager(self.kmcGroupCount, positions)
         kmcClusters = kmc.Fit()
 
+        for id, data in kmcClusters.items():
+            self.exportPreview.insert(tk.END, f"Cluster ID: {id}\n")
+            for p in data["points"]:
+                self.exportPreview.insert(tk.END, f"({p[0]}, {p[1]})\n")
+            self.exportPreview.insert(tk.END, "\n")
+
     def PageTypeSelected(self, event):
         pageType = self.pageTypeCombobox.get()
 
@@ -238,9 +250,12 @@ class UIManager():
 
         if (pageType == self.pageOptions[0]): #Listings Page
             self.databaseManager.currentPageTable = self.databaseManager.listingsTableName
+
+            #Re-enable favorite button
             self.generateListingsButton.config(state = tk.NORMAL)
             self.cityTextBox.config(state = tk.NORMAL)
             self.countryTextBox.config(state = tk.NORMAL)
+            #---
 
             #Populate Page
             self.listingsData = self.databaseManager.GetHomeListingData()
@@ -269,6 +284,21 @@ class UIManager():
         if (self.databaseManager.AddToUserTable(userName)):
             self.userValues.append(userName)
             self.userCombobox.configure(values = self.userValues)
+
+    def RemoveUser(self):
+        pass
+
+    def SetupDefaultUser(self):
+        if (self.databaseManager.GetUserID('default') == None):
+            self.userCombobox.set('default')
+            self.currentUser = self.userCombobox.get()
+
+            self.userEntryBox.insert(0, 'default')
+            self.AddUser()
+            self.userEntryBox.delete(0, tk.END)
+        else:
+            self.userCombobox.set('default')
+            self.currentUser = self.userCombobox.get()
 
     def ComboboxSelected(self, event):
         if (self.listingsData == None): return
@@ -315,15 +345,17 @@ class UIManager():
             listingOptionsContainer = tk.Frame(listingContainer, bg = self.panelColor)
             listingOptionsContainer.grid(row = 0, column = 1, sticky = "nsew", padx = 5, pady = 5)
 
+            #Setup Widgets for Adding Favorites
             if (self.databaseManager.currentPageTable == self.databaseManager.listingsTableName):
                 favoriteButton = tk.Button(listingOptionsContainer, text = "+ Favorite", 
                                         bg = self.highlightColor, fg = self.textColor, font = self.smallButtonFont)
                 favoriteButton.config(command = lambda r = row, b = favoriteButton: self.AddToFavorites(r, b))
 
-                if (self.databaseManager.IsFavorited(row['ID'])):
+                if (self.databaseManager.IsFavorited(row['ID'], self.currentUser)):
                     favoriteButton.config(state = tk.DISABLED, bg = self.bgColor)
 
                 favoriteButton.pack(padx = 5, pady = 5)
+            #---
 
             flagOptions = ['Love', 'Like', 'Pass']
             flagCombobox = ttk.Combobox(listingOptionsContainer, values = flagOptions)
@@ -335,7 +367,7 @@ class UIManager():
 
     def AddToFavorites(self, listing, button):
         button.config(state = tk.DISABLED, bg = self.bgColor)
-        self.databaseManager.AddToFavoritesTable(listing['ID'])
+        self.databaseManager.AddToFavoritesTable(listing['ID'], self.currentUser)
 
     def UpdateComboBoxOptions(self):
         pageOptions = []

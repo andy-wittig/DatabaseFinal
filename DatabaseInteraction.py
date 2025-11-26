@@ -104,12 +104,19 @@ class DBManager():
         rows = self.cur.fetchall()
         return rows
     
-    def GetHomePositions(self):
+    def GetHomePositions(self, userName):
+        userID = self.GetUserID(userName)
+
         if (self.currentPageTable == self.listingsTableName):
             sqlQuery = f'SELECT "Longitude", "Latitude" FROM public."{self.listingsTableName}";'
         elif (self.currentPageTable == self.favoritesTableName):
-            sqlQuery = f'SELECT "Longitude", "Latitude" FROM public."{self.listingsTableName}" L JOIN public."{self.favoritesTableName}" F ON F."listing_id" = L."ID";'
-        self.cur.execute(sqlQuery)
+            sqlQuery = (
+                    f'SELECT "Longitude", "Latitude" '
+                    f'FROM public."{self.listingsTableName}" L '
+                    f'JOIN public."{self.favoritesTableName}" F '
+                    f'ON F."listing_id" = L."ID" WHERE F.user_id = %s;'
+                    )
+        self.cur.execute(sqlQuery, (userID,))
         rows = self.cur.fetchall()
         return rows
     
@@ -137,24 +144,41 @@ class DBManager():
         execute_values(self.cur, sqlCommand, values)
         self.conn.commit()
 
-    def AddToFavoritesTable(self, listingID):
-        if (self.IsFavorited(listingID)): return
+    def GetUserID(self, userName):
+        sqlQuery = f'SELECT user_id FROM public."{self.usersTableName}" WHERE username = %s;'
+        self.cur.execute(sqlQuery, (userName,))
+        row = self.cur.fetchone()
+        if not row:
+            return None
+        return row['user_id']
 
-        sqlCommand = f'INSERT INTO "{self.favoritesTableName}" (listing_id) VALUES (%s)'
-        self.cur.execute(sqlCommand, (listingID,))
+    def AddToFavoritesTable(self, listingID, userName):
+        if (self.IsFavorited(listingID, userName)): return
+
+        userID = self.GetUserID(userName)
+
+        sqlCommand = f'INSERT INTO "{self.favoritesTableName}" (listing_id, user_id) VALUES (%s, %s)'
+        self.cur.execute(sqlCommand, (listingID, userID))
         self.conn.commit()
 
     def GetFavorites(self, userName):
-        if (userName == ""): return
-        
-        sqlQuery = f'SELECT L.* FROM public."{self.listingsTableName}" L JOIN public."{self.favoritesTableName}" F ON F."listing_id" = L."ID";'
-        self.cur.execute(sqlQuery)
+        userID = self.GetUserID(userName)
+
+        sqlQuery = (
+        f'SELECT L.* '
+        f'FROM public."{self.listingsTableName}" L '
+        f'JOIN public."{self.favoritesTableName}" F '
+        f'ON F."listing_id" = L."ID" '
+        f'WHERE F."user_id" = %s;'
+    )       
+        self.cur.execute(sqlQuery, (userID,))
         rows = self.cur.fetchall()
         return rows
     
-    def IsFavorited(self, listingID):
-        sqlQuery = f'SELECT 1 FROM public."{self.favoritesTableName}" WHERE listing_id = %s'
-        self.cur.execute(sqlQuery, (listingID,))
+    def IsFavorited(self, listingID, userName):
+        userID = self.GetUserID(userName)
+        sqlQuery = f'SELECT 1 FROM public."{self.favoritesTableName}" WHERE listing_id = %s AND user_id = %s'
+        self.cur.execute(sqlQuery, (listingID, userID))
         response = self.cur.fetchone()
         return response is not None
     
