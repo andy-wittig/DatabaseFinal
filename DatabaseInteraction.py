@@ -16,6 +16,7 @@ class DBManager():
         self.listingsTableName = "Listings"
         self.usersTableName = "Users"
         self.favoritesTableName = "Favorites"
+        self.notesTableName = "Notes"
         self.currentPageTable = self.listingsTableName
         
         self.sortQueryDict = {
@@ -168,6 +169,29 @@ class DBManager():
             return None
         return row['user_id']
     
+    def GetNote(self, userName, listingID):
+        if (not self.NoteExists(listingID, userName)): return None
+
+        userID = self.GetUserID(userName)
+
+        sqlQuery = (
+        f'SELECT N.note_text '
+        f'FROM public."{self.listingsTableName}" L '
+        f'JOIN public."{self.notesTableName}" N '
+        f'ON N."listing_id" = L."ID" '
+        f'WHERE N."user_id" = %s;'
+        )       
+        self.cur.execute(sqlQuery, (userID,))
+        row = self.cur.fetchone()
+        return row['note_text']
+    
+    def AddNote(self, userName, listingID, note):
+        if (self.NoteExists(listingID, userName)): return
+        userID = self.GetUserID(userName)
+
+        sqlCommand = f'INSERT INTO "{self.notesTableName}" (listing_id, user_id, note_text) VALUES (%s, %s, %s)'
+        self.cur.execute(sqlCommand, (listingID, userID, note))
+    
     def RemoveFromFavoritesTable(self, listingID):
         sqlQuery = f'DELETE FROM public."{self.favoritesTableName}" WHERE listing_id = %s;'
         self.cur.execute(sqlQuery, (listingID,))
@@ -189,7 +213,7 @@ class DBManager():
         f'JOIN public."{self.favoritesTableName}" F '
         f'ON F."listing_id" = L."ID" '
         f'WHERE F."user_id" = %s;'
-    )       
+        )       
         self.cur.execute(sqlQuery, (userID,))
         rows = self.cur.fetchall()
         return rows
@@ -197,6 +221,13 @@ class DBManager():
     def IsFavorited(self, listingID, userName):
         userID = self.GetUserID(userName)
         sqlQuery = f'SELECT 1 FROM public."{self.favoritesTableName}" WHERE listing_id = %s AND user_id = %s'
+        self.cur.execute(sqlQuery, (listingID, userID))
+        response = self.cur.fetchone()
+        return response is not None
+
+    def NoteExists(self, listingID, userName):
+        userID = self.GetUserID(userName)
+        sqlQuery = f'SELECT 1 FROM public."{self.notesTableName}" WHERE listing_id = %s AND user_id = %s'
         self.cur.execute(sqlQuery, (listingID, userID))
         response = self.cur.fetchone()
         return response is not None

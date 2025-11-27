@@ -22,8 +22,8 @@ class UIManager():
         self.defaultSize = [1280, 720]
 
         self.titleFont = font.Font(family = "Helvetica", size = 18, weight = "bold")
-        self.buttonFont = font.Font(family = "Helvetica", size = 16, weight = "bold")
-        self.smallButtonFont = font.Font(family = "Helvetica", size = 12)
+        self.buttonFont = font.Font(family = "Helvetica", size = 14, weight = "bold")
+        self.smallButtonFont = font.Font(family = "Helvetica", size = 12, weight = "bold")
         self.textFont = font.Font(family = "Helvetica", size = 12)
         self.pageSize = 50
 
@@ -97,7 +97,7 @@ class UIManager():
 
         self.exportTitleLabel.pack(fill = "x")
         self.exportPreview.pack(fill = "both", expand = True)
-        self.exportButton.pack(fill = "x")
+        self.exportButton.pack(fill = "x", pady = 5)
 
     def SetupHomeListingsWidgets(self):
         self.homeListingsTitleLabel = tk.Label(self.homeListingsFrame, text="Home Listings",
@@ -166,7 +166,7 @@ class UIManager():
         self.TextBoxContainer.pack(fill = "x")
         self.cityTextBox.pack(side = "left", expand = True, fill = "x", padx = 5, pady = 5)
         self.countryTextBox.pack(side = "left", expand = True, fill = "x", padx = 5, pady = 5)
-        self.generateListingsButton.pack(fill = "x")
+        self.generateListingsButton.pack(fill = "x", pady = 5)
 
     def SetupOrganizationOptionsWidgets(self):
         self.organizationOptionsTitleLabel = tk.Label(self.organizationOptionsFrame, text="Organize Listings",
@@ -189,13 +189,14 @@ class UIManager():
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.RemoveUser())
 
         #Sort By Options
-        self.SortPriceHighButton = tk.Button(self.organizationOptionsFrame, text = "Sort by Price: Highest", 
+        self.optionsContainer = tk.Frame(self.organizationOptionsFrame, bg = self.panelColor)
+        self.SortPriceHighButton = tk.Button(self.optionsContainer, text = "Sort by Price: Highest", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.SortBy("PriceHigh"))
-        self.SortPriceLowButton = tk.Button(self.organizationOptionsFrame, text = "Sort by Price: Lowest", 
+        self.SortPriceLowButton = tk.Button(self.optionsContainer, text = "Sort by Price: Lowest", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.SortBy("PriceLow"))
         
         #kmc Grouping
-        self.kmcFrame = tk.Frame(self.organizationOptionsFrame, bg = self.panelColor)
+        self.kmcFrame = tk.Frame(self.optionsContainer, bg = self.panelColor)
         self.kmcCombobox = ttk.Combobox(self.kmcFrame, values = self.kmcGroupCountOptions)
         self.kmcCombobox.bind("<<ComboboxSelected>>", self.KMCComboboxSelected)
         self.kmcRunButton = tk.Button(self.kmcFrame, text = "Run kmc Algorithm", 
@@ -213,8 +214,9 @@ class UIManager():
         self.addUserButton.pack(fill = "x", expand = True, side = "right")
 
         self.spacerFrame = tk.Frame(self.organizationOptionsFrame)
-        self.spacerFrame.pack(pady = 40)
+        self.spacerFrame.pack(pady = 20)
 
+        self.optionsContainer.pack(fill = "both", padx = 5, pady = 5)
         self.SortPriceHighButton.pack(anchor = "w", pady = 5)
         self.SortPriceLowButton.pack(anchor = "w", pady = 5)
 
@@ -302,8 +304,11 @@ class UIManager():
             self.listingsData = self.databaseManager.GetFavorites(self.currentUser)
             self.SetupComboboxPages()
 
-    def FlagSelected(self, event):
-        pass
+    def FlagSelected(self, event, combobox, row):
+        note = combobox.get()
+        userName = self.currentUser
+        listingID = row["ID"]
+        self.databaseManager.AddNote(userName, listingID, note)
 
     def UserSelected(self, event):
         self.currentUser = self.userCombobox.get()
@@ -359,7 +364,7 @@ class UIManager():
                 f"---{count}---\n"
                 f"Bathrooms: {_bathrooms}\n"
                 f"Bedrooms: {_bedrooms}\n"
-                f"Size: {_size}\n"
+                f"Size: {_size} ft^2\n"
                 f"House Category: {_houseCategory}\n"
                 f"Price: ${_price}\n"
                 f"Street: {_streetName}\n"
@@ -399,8 +404,11 @@ class UIManager():
 
             flagOptions = ['Love', 'Like', 'Pass']
             flagCombobox = ttk.Combobox(listingOptionsContainer, values = flagOptions)
-            flagCombobox.bind("<<ComboboxSelected>>", self.FlagSelected)
+            flagCombobox.bind("<<ComboboxSelected>>", lambda event, cb = flagCombobox, r = row: self.FlagSelected(event, cb, r))
             flagCombobox.pack(padx = 5, pady = 5)
+
+            flag = self.databaseManager.GetNote(self.currentUser, row["ID"])
+            if (flag is not None): flagCombobox.set(flag)
 
             listingLabel.grid(row = 0, column = 0, sticky = "w")
             listingContainer.pack(fill = "x", padx = 5, pady = 5)
