@@ -185,7 +185,7 @@ class UIManager():
         self.addUserButton = tk.Button(self.addUserFrame, text = "Add User", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.AddUser())
         
-        self.removeUserButton = tk.Button(self.organizationOptionsFrame, text = "Remove User", 
+        self.removeUserButton = tk.Button(self.organizationOptionsFrame, text = "Remove Current User", 
                                       bg = self.elementColor, fg = self.textColor, font = self.buttonFont, command = lambda: self.RemoveUser())
 
         #Sort By Options
@@ -207,11 +207,10 @@ class UIManager():
         self.selectUserFrame.pack(padx = 5, pady = 5)
         self.userSelectLabel.pack(fill = "x", expand = True, side = "left")
         self.userCombobox.pack(fill = "x", expand = True, side = "right")
-
+        self.removeUserButton.pack(padx = 5, pady = 5)
         self.addUserFrame.pack(padx = 5, pady = 5)
         self.userEntryBox.pack(fill = "x", expand = True, side = "left")
         self.addUserButton.pack(fill = "x", expand = True, side = "right")
-        self.removeUserButton.pack(padx = 5, pady = 5)
 
         self.spacerFrame = tk.Frame(self.organizationOptionsFrame)
         self.spacerFrame.pack(pady = 40)
@@ -314,15 +313,20 @@ class UIManager():
         if (self.databaseManager.AddToUserTable(userName)):
             self.userValues.append(userName)
             self.userCombobox.configure(values = self.userValues)
+            self.userEntryBox.delete(0, tk.END)
 
     def RemoveUser(self):
-        pass
+        self.databaseManager.RemoveUserByName(self.currentUser)
+        self.userValues.remove(self.currentUser)
+        self.userCombobox['values'] = self.userValues
+        self.SetupDefaultUser()
 
     def SetupDefaultUser(self):
         if (self.databaseManager.GetUserID('default') == None):
             self.userCombobox.set('default')
             self.currentUser = self.userCombobox.get()
 
+            self.userEntryBox.delete(0, tk.END)
             self.userEntryBox.insert(0, 'default')
             self.AddUser()
             self.userEntryBox.delete(0, tk.END)
@@ -404,7 +408,7 @@ class UIManager():
     def RemoveFromFavorites(self, listing):
         listingID = listing["ID"]
         self.databaseManager.RemoveFromFavoritesTable(listingID)
-        self.PageTypeSelected(None)
+        self.PageTypeSelected(None) #Refresh
         
     def AddToFavorites(self, listing, button):
         button.config(state = tk.DISABLED, bg = self.bgColor)

@@ -218,6 +218,16 @@ class DBManager():
         response = self.cur.fetchone()
         return response is not None
     
+    def RemoveUserByName(self, userName):
+        userID = self.GetUserID(userName)
+
+        #Remove favorite listings first to avoid constraint issues!
+        sqlQuery = f'DELETE FROM public."{self.favoritesTableName}" WHERE user_id = %s;'
+        self.cur.execute(sqlQuery, (userID,))
+
+        sqlQuery = f'DELETE FROM public."{self.usersTableName}" WHERE username = %s;'
+        self.cur.execute(sqlQuery, (userName,))
+    
     def AddToUserTable(self, name):
         if (self.DoesUserExist(name)): return False
 
