@@ -28,7 +28,8 @@ class UIManager():
         self.pageSize = 50
 
         self.bgColor      = "#3D3D3D"
-        self.highlightColor = "#B22222"
+        self.highlightRedColor = "#B22222"
+        self.highlightGreenColor = "#14d203"
         self.accentColor = "#536878"
         self.titleColor = "#6e7f80"
         self.panelColor   = "#666666"
@@ -374,16 +375,22 @@ class UIManager():
             listingOptionsContainer = tk.Frame(listingContainer, bg = self.panelColor)
             listingOptionsContainer.grid(row = 0, column = 1, sticky = "nsew", padx = 5, pady = 5)
 
-            #Setup Widgets for Adding Favorites
+            #Setup Extra Widgets for Listing Boxes
             if (self.databaseManager.currentPageTable == self.databaseManager.listingsTableName):
-                favoriteButton = tk.Button(listingOptionsContainer, text = "+ Favorite", 
-                                        bg = self.highlightColor, fg = self.textColor, font = self.smallButtonFont)
+                favoriteButton = tk.Button(listingOptionsContainer, text = "Favorite", 
+                                        bg = self.highlightGreenColor, fg = self.textColor, font = self.smallButtonFont)
                 favoriteButton.config(command = lambda r = row, b = favoriteButton: self.AddToFavorites(r, b))
 
                 if (self.databaseManager.IsFavorited(row['ID'], self.currentUser)):
                     favoriteButton.config(state = tk.DISABLED, bg = self.bgColor)
 
                 favoriteButton.pack(padx = 5, pady = 5)
+            elif (self.databaseManager.currentPageTable == self.databaseManager.favoritesTableName):
+                removeButton = tk.Button(listingOptionsContainer, text = "Unfavorite", 
+                                        bg = self.highlightRedColor, fg = self.textColor, font = self.smallButtonFont)
+                removeButton.config(command = lambda r = row: self.RemoveFromFavorites(r))
+
+                removeButton.pack(padx = 5, pady = 5)
             #---
 
             flagOptions = ['Love', 'Like', 'Pass']
@@ -391,9 +398,14 @@ class UIManager():
             flagCombobox.bind("<<ComboboxSelected>>", self.FlagSelected)
             flagCombobox.pack(padx = 5, pady = 5)
 
-            listingLabel.grid(row = 0, column = 0, sticky="w")
+            listingLabel.grid(row = 0, column = 0, sticky = "w")
             listingContainer.pack(fill = "x", padx = 5, pady = 5)
 
+    def RemoveFromFavorites(self, listing):
+        listingID = listing["ID"]
+        self.databaseManager.RemoveFromFavoritesTable(listingID)
+        self.PageTypeSelected(None)
+        
     def AddToFavorites(self, listing, button):
         button.config(state = tk.DISABLED, bg = self.bgColor)
         self.databaseManager.AddToFavoritesTable(listing['ID'], self.currentUser)

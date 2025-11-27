@@ -66,6 +66,7 @@ class DBManager():
                                         host = self.dbHost,
                                         port = self.dbPort)
             self.cur = self.conn.cursor(cursor_factory = RealDictCursor)
+            self.conn.autocommit = True
 
             print("Database connected successfully")
         except psycopg2.Error as e:
@@ -139,7 +140,6 @@ class DBManager():
     
     def ClearTable(self, tableName):
         self.cur.execute(f'DELETE FROM "{tableName}";')
-        self.conn.commit()
     
     def PullHomeListingData(self, _city, _country):
         houseObj = pyRealtor.HousesFacade()
@@ -159,7 +159,6 @@ class DBManager():
 
         sqlCommand = f'INSERT INTO "{self.listingsTableName}" ({', '.join(cols)}) VALUES %s'
         execute_values(self.cur, sqlCommand, values)
-        self.conn.commit()
 
     def GetUserID(self, userName):
         sqlQuery = f'SELECT user_id FROM public."{self.usersTableName}" WHERE username = %s;'
@@ -168,6 +167,10 @@ class DBManager():
         if not row:
             return None
         return row['user_id']
+    
+    def RemoveFromFavoritesTable(self, listingID):
+        sqlQuery = f'DELETE FROM public."{self.favoritesTableName}" WHERE listing_id = %s;'
+        self.cur.execute(sqlQuery, (listingID,))
 
     def AddToFavoritesTable(self, listingID, userName):
         if (self.IsFavorited(listingID, userName)): return
@@ -176,7 +179,6 @@ class DBManager():
 
         sqlCommand = f'INSERT INTO "{self.favoritesTableName}" (listing_id, user_id) VALUES (%s, %s)'
         self.cur.execute(sqlCommand, (listingID, userID))
-        self.conn.commit()
 
     def GetFavorites(self, userName):
         userID = self.GetUserID(userName)
@@ -221,7 +223,6 @@ class DBManager():
 
         sqlCommand = f'INSERT INTO "{self.usersTableName}" (username) VALUES (%s)'
         self.cur.execute(sqlCommand, (name,))
-        self.conn.commit()
 
         return True
 
