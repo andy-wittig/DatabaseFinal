@@ -175,21 +175,23 @@ class DBManager():
         userID = self.GetUserID(userName)
 
         sqlQuery = (
-        f'SELECT N.note_text '
-        f'FROM public."{self.listingsTableName}" L '
-        f'JOIN public."{self.notesTableName}" N '
-        f'ON N."listing_id" = L."ID" '
-        f'WHERE N."user_id" = %s;'
+        f'SELECT note_text '
+        f'FROM public."{self.notesTableName}" '
+        f'WHERE listing_id = %s AND user_id = %s;'
         )       
-        self.cur.execute(sqlQuery, (userID,))
+        self.cur.execute(sqlQuery, (listingID, userID))
         row = self.cur.fetchone()
         return row['note_text']
     
     def AddNote(self, userName, listingID, note):
-        if (self.NoteExists(listingID, userName)): return
         userID = self.GetUserID(userName)
 
-        sqlCommand = f'INSERT INTO "{self.notesTableName}" (listing_id, user_id, note_text) VALUES (%s, %s, %s)'
+        sqlCommand = (
+        f'INSERT INTO "{self.notesTableName}" (listing_id, user_id, note_text) '
+        f'VALUES (%s, %s, %s) '
+        f'ON CONFLICT (listing_id, user_id) '
+        f'DO UPDATE SET note_text = EXCLUDED.note_text'
+        )
         self.cur.execute(sqlCommand, (listingID, userID, note))
     
     def RemoveFromFavoritesTable(self, listingID):
