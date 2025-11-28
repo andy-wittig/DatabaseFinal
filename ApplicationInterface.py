@@ -303,12 +303,18 @@ class UIManager():
             #Populate Page
             self.listingsData = self.databaseManager.GetFavorites(self.currentUser)
             self.SetupComboboxPages()
-
-    def FlagSelected(self, event, combobox, row):
-        note = combobox.get()
+    
+    def AddNote(self, event, text, row):
+        note = text.get('1.0', tk.END)
         userName = self.currentUser
         listingID = row["ID"]
         self.databaseManager.AddNote(userName, listingID, note)
+
+    def FlagSelected(self, event, combobox, row):
+        flag = combobox.get()
+        userName = self.currentUser
+        listingID = row["ID"]
+        self.databaseManager.AddFlag(userName, listingID, flag)
 
     def UserSelected(self, event):
         self.currentUser = self.userCombobox.get()
@@ -407,8 +413,18 @@ class UIManager():
             flagCombobox.bind("<<ComboboxSelected>>", lambda event, cb = flagCombobox, r = row: self.FlagSelected(event, cb, r))
             flagCombobox.pack(padx = 5, pady = 5)
 
-            flag = self.databaseManager.GetNote(self.currentUser, row["ID"])
+            noteText = tk.Text(listingOptionsContainer, font = self.textFont, width = 15, height = 4, wrap = "word")
+            noteText.pack()
+            noteButton = tk.Button(listingOptionsContainer, text = "Submit", 
+                                        bg = self.elementColor, fg = self.textColor, font = self.smallButtonFont)
+            noteButton.config(command = lambda nt = noteText, r = row: self.AddNote(event, nt, r))
+            noteButton.pack()
+
+            flag = self.databaseManager.GetFlag(self.currentUser, row["ID"])
             if (flag is not None): flagCombobox.set(flag)
+
+            note = self.databaseManager.GetNote(self.currentUser, row["ID"])
+            if (note is not None): noteText.insert("1.0", note)
 
             listingLabel.grid(row = 0, column = 0, sticky = "w")
             listingContainer.pack(fill = "x", padx = 5, pady = 5)

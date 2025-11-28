@@ -16,6 +16,7 @@ class DBManager():
         self.listingsTableName = "Listings"
         self.usersTableName = "Users"
         self.favoritesTableName = "Favorites"
+        self.flagsTableName = "Flags"
         self.notesTableName = "Notes"
         self.currentPageTable = self.listingsTableName
         
@@ -150,16 +151,19 @@ class DBManager():
         )
 
         houseData = houseObj.houses_df #processed data
-        #print(houseData.columns)
 
         cols = ['"ID"', '"Bathrooms"', '"Bedrooms"', '"Size"', '"House Category"', '"Price"',
                 '"street name"', '"city"', '"state"', '"Latitude"', '"Longitude"', '"InsertedDate"']
         values = [tuple(x) for x in houseData.to_numpy()]
 
         self.ClearTable(self.listingsTableName)
+        self.ClearTable(self.realtorsTableName)
 
-        sqlCommand = f'INSERT INTO "{self.listingsTableName}" ({', '.join(cols)}) VALUES %s'
-        execute_values(self.cur, sqlCommand, values)
+        sqlQuery = f'INSERT INTO "{self.listingsTableName}" ({', '.join(cols)}) VALUES %s'
+        execute_values(self.cur, sqlQuery, values)
+
+        #sqlQuery = f'INSERT INTO "{self.listingsTableName}" (realtor_name, listing_id) VALUES (%s, %s)'
+        #self.cur.execute(sqlQuery, houseData["Realtor Name"], houseData["ID"])
 
     def GetUserID(self, userName):
         sqlQuery = f'SELECT user_id FROM public."{self.usersTableName}" WHERE username = %s;'
@@ -183,6 +187,20 @@ class DBManager():
         row = self.cur.fetchone()
         return row['note_text']
     
+    def GetFlag(self, userName, listingID):
+        if (not self.FlagExists(listingID, userName)): return None
+
+        userID = self.GetUserID(userName)
+
+        sqlQuery = (
+        f'SELECT flag_text '
+        f'FROM public."{self.flagsTableName}" '
+        f'WHERE listing_id = %s AND user_id = %s;'
+        )       
+        self.cur.execute(sqlQuery, (listingID, userID))
+        row = self.cur.fetchone()
+        return row['flag_text']
+    
     def AddNote(self, userName, listingID, note):
         userID = self.GetUserID(userName)
 
@@ -193,6 +211,17 @@ class DBManager():
         f'DO UPDATE SET note_text = EXCLUDED.note_text'
         )
         self.cur.execute(sqlCommand, (listingID, userID, note))
+
+    def AddFlag(self, userName, listingID, flag):
+        userID = self.GetUserID(userName)
+
+        sqlCommand = (
+        f'INSERT INTO "{self.flagsTableName}" (listing_id, user_id, flag_text) '
+        f'VALUES (%s, %s, %s) '
+        f'ON CONFLICT (listing_id, user_id) '
+        f'DO UPDATE SET flag_text = EXCLUDED.flag_text'
+        )
+        self.cur.execute(sqlCommand, (listingID, userID, flag))
     
     def RemoveFromFavoritesTable(self, listingID):
         sqlQuery = f'DELETE FROM public."{self.favoritesTableName}" WHERE listing_id = %s;'
@@ -226,10 +255,17 @@ class DBManager():
         self.cur.execute(sqlQuery, (listingID, userID))
         response = self.cur.fetchone()
         return response is not None
-
+    
     def NoteExists(self, listingID, userName):
         userID = self.GetUserID(userName)
         sqlQuery = f'SELECT 1 FROM public."{self.notesTableName}" WHERE listing_id = %s AND user_id = %s'
+        self.cur.execute(sqlQuery, (listingID, userID))
+        response = self.cur.fetchone()
+        return response is not None
+
+    def FlagExists(self, listingID, userName):
+        userID = self.GetUserID(userName)
+        sqlQuery = f'SELECT 1 FROM public."{self.flagsTableName}" WHERE listing_id = %s AND user_id = %s'
         self.cur.execute(sqlQuery, (listingID, userID))
         response = self.cur.fetchone()
         return response is not None
