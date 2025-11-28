@@ -2,10 +2,11 @@ import tkinter as tk
 import tkinter.scrolledtext as scrolledtext
 from tkinter import font
 from tkinter import ttk
+from tkinter import messagebox
+from tkinter import filedialog
 import math
 from KMeansClustering import KMeansClusteringManager
 from fpdf import FPDF
-from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -83,6 +84,8 @@ class UIManager():
         #--------------------------
 
         self.SetupDefaultUser()
+        self.pageTypeCombobox.set(self.pageOptions[0])
+        self.PageTypeSelected(None)
         
     def SetupExportWidgets(self):
         self.exportPreview = scrolledtext.ScrolledText(self.exportFrame, bg=self.panelColor, fg = self.textColor, font = self.textFont,
@@ -467,5 +470,10 @@ class UIManager():
         #---
 
     def SortBy(self, sortType): #ISSUE: Favorites are sorted by the listings table, and not by the favorites!
+        pageType = self.pageTypeCombobox.get()
+        if (pageType == self.pageOptions[1]): #Favorites page
+            messagebox.showinfo("Warning", "You cannot sort lisings from the favorites page yet!")
+            return
+        
         self.listingsData = self.databaseManager.ExecuteScript(self.databaseManager.sortQueryDict[sortType])
         self.SetupComboboxPages()

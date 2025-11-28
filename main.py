@@ -7,7 +7,6 @@ mUI = UIManager(mDatabase)
 #---------------------
 
 #---TODO---
-#- Add labels or tags to listings to help remember why you favorited that specific home.
 #- Feature to compare and contrast homes --> sort of like PC part picker
 
 def main():
