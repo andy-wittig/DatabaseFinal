@@ -1,11 +1,10 @@
-from typing import List
 from collections import Counter
 import numpy as np
 import matplotlib.pyplot as plt
 import smopy
 
 class KMeansClusteringManager():
-    def __init__(self, groupCount, points: List):
+    def __init__(self, groupCount, points):
         self.k = groupCount
         self.points = np.array(points)
 

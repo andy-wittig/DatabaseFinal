@@ -78,6 +78,8 @@ class DBManager():
         self.CheckTablesExist(self.listingsTableName, "SQL_Scripts\CreateListingsTable.sql")
         self.CheckTablesExist(self.usersTableName, "SQL_Scripts\CreateUsersTable.sql")
         self.CheckTablesExist(self.favoritesTableName, "SQL_Scripts\CreateFavoritesTable.sql")
+        self.CheckTablesExist(self.notesTableName, "SQL_Scripts\CreateNotesTable.sql")
+        self.CheckTablesExist(self.flagsTableName, "SQL_Scripts\CreateFlagsTable.sql")
 
     def CheckTablesExist(self, tableName, scriptPath):
         self.cur.execute("SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = %s;", (tableName,))

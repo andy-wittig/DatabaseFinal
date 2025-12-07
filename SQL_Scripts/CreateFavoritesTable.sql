@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS public."Favorites"
     CONSTRAINT "Favorites_user_id_fkey" FOREIGN KEY (user_id)
         REFERENCES public."Users" (user_id) MATCH SIMPLE
         ON UPDATE NO ACTION
-        ON DELETE CASCADE
+        ON DELETE NO ACTION
+        NOT VALID
 )
 
 TABLESPACE pg_default;
