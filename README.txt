@@ -7,7 +7,8 @@ You're in luck, here's the simple plan...
     and library names that this project is depended on. Install those in order to run the program.
 
 2.) Alright, so lets get that database setup. Home Buyer Helper expects a PostgreSQL server to connect to.
-    The following are the information on how the server needs to be created.
+    The following is the information on how the server needs to be configured.
+    This configuration will be done automatically if you don't wish to change any values.
     Any modification to the following will require matching changes to the variables within DatabaseInteraction.py
    
     -Name = "HomeBuyer"

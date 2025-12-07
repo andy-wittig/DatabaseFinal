@@ -4,10 +4,9 @@
 
 CREATE TABLE IF NOT EXISTS public."Favorites"
 (
-    favorite_id integer NOT NULL DEFAULT nextval('"Favorites_favorite_id_seq"'::regclass),
+    favorite_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id integer,
     listing_id bigint,
-    CONSTRAINT "Favorites_pkey" PRIMARY KEY (favorite_id),
     CONSTRAINT "Favorites_listing_id_fkey" FOREIGN KEY (listing_id)
         REFERENCES public."Listings" ("ID") MATCH SIMPLE
         ON UPDATE NO ACTION

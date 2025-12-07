@@ -5,8 +5,7 @@
 CREATE TABLE IF NOT EXISTS public."Users"
 (
     username character varying(255) COLLATE pg_catalog."default",
-    user_id integer NOT NULL DEFAULT nextval('"Users_user_id_seq"'::regclass),
-    CONSTRAINT "Users_pkey" PRIMARY KEY (user_id)
+    user_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY
 )
 
 TABLESPACE pg_default;

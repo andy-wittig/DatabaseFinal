@@ -1,7 +1,7 @@
 from ApplicationInterface import UIManager
 from DatabaseInteraction import DBManager
 
- #--- Init Systems ---5
+ #--- Init Systems ---
 mDatabase = DBManager()
 mUI = UIManager(mDatabase)
 #---------------------

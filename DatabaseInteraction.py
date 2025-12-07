@@ -149,7 +149,8 @@ class DBManager():
         houseObj = pyRealtor.HousesFacade()
         houseObj.search_save_houses(
             search_area = _city,
-            country = _country
+            country = _country,
+            use_proxy = True
         )
 
         houseData = houseObj.houses_df #processed data
@@ -159,13 +160,9 @@ class DBManager():
         values = [tuple(x) for x in houseData.to_numpy()]
 
         self.ClearTable(self.listingsTableName)
-        self.ClearTable(self.realtorsTableName)
 
         sqlQuery = f'INSERT INTO "{self.listingsTableName}" ({', '.join(cols)}) VALUES %s'
         execute_values(self.cur, sqlQuery, values)
-
-        #sqlQuery = f'INSERT INTO "{self.listingsTableName}" (realtor_name, listing_id) VALUES (%s, %s)'
-        #self.cur.execute(sqlQuery, houseData["Realtor Name"], houseData["ID"])
 
     def GetUserID(self, userName):
         sqlQuery = f'SELECT user_id FROM public."{self.usersTableName}" WHERE username = %s;'
